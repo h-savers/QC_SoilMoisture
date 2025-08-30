@@ -7,7 +7,7 @@ dayOKwithSMOS=zeros(dayOK,1) ;
 
 for ii=1:dayOK
 % timeproduct_sixtotOK(ii,3)   
-[tyear1, tmonth1, tday1]=ymd(timeproduct_sixtotOK(ii,:)-day(1)) ; 
+[tyear1, tmonth1, tday1]=ymd(timeproduct_sixtotOK(ii,:)-1) ; 
 tday1=unique(tday1); tday1=tday1(1) ;
 tmonth1=unique(tmonth1); tmonth1=tmonth1(1) ;
 tyear1=unique(tyear1); tyear1=tyear1(1) ;
@@ -16,7 +16,7 @@ tday2=unique(tday2); tday2=tday2(1) ;
 tmonth2=unique(tmonth2); tmonth2=tmonth2(1) ;
 tyear2=unique(tyear2); tyear2=tyear2(1) ;
 
-[tyear3, tmonth3, tday3]=ymd(timeproduct_sixtotOK(ii,:)+day(1)) ; 
+[tyear3, tmonth3, tday3]=ymd(timeproduct_sixtotOK(ii,:)+1) ; 
 tday3=unique(tday3); tday3=tday3(1) ;
 tmonth3=unique(tmonth3); tmonth3=tmonth3(1) ;
 tyear3=unique(tyear3); tyear3=tyear3(1) ;

@@ -152,7 +152,7 @@ numdays=ceil(juliandate(endDate)-juliandate(startDate)+1) ; %devo mettere +1 ???
 
 %%%% find out HydroGNSS file folder and names for the specified time frame
 for ii=1:numdays
-timeproduct=startDate+day(ii-1) ; 
+timeproduct=startDate+ii-1 ; 
     for kk=1:4
     timeproductsix=timeproduct+hours((kk-1)*6) ; 
     timeproduct_sixtot(ii, kk)=timeproductsix ; 
