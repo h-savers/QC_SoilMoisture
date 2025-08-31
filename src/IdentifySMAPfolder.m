@@ -1,7 +1,9 @@
 function [dayOK, dayOKwithSMAP, SMAPfolderOK, SMAPfileOK] = IdentifySMAPfolder(L2OPdataOK, timeproduct_sixtotOK, DynamicAuxiliarySMAPRootPath)
 
 [dayOK, sixhour]= size(L2OPdataOK) ; 
-% SMAPfolderOK=[] ;
+% SMAPfolderOK=[] ;SMAPfolderOK
+SMAPfileOK="" ; 
+SMAPfolderOK="" ; 
 daySMAP=0 ; 
 dayOKwithSMAP=zeros(dayOK,1) ;
 
@@ -36,7 +38,7 @@ SMAPfolderOK(ii,3)=string([char(DynamicAuxiliarySMAPRootPath) '\' char(string(ty
         dayOKwithSMAP(ii)=ii ; 
         else, throw(MException('INPUT:ERROR', "SMAP file non available in existing folder. Program exiting.")) ;
         end
-    else SMAPfolderOK(ii,1)=NaN ; 
+    else SMAPfolderOK(ii,1)=NaN ; SMAPfileOK(ii,1)=NaN ; 
     end
     if  exist(SMAPfolderOK(ii,2))~=0;
     content=dir(SMAPfolderOK(ii,2))  ;
@@ -47,7 +49,7 @@ SMAPfolderOK(ii,3)=string([char(DynamicAuxiliarySMAPRootPath) '\' char(string(ty
         dayOKwithSMAP(ii)=ii ; 
         else,  throw(MException('INPUT:ERROR', "SMAP file non available in existing folder. Program exiting.")) ;
         end
-    else SMAPfolderOK(ii,2)=NaN ;
+    else SMAPfolderOK(ii,2)=NaN ; SMAPfileOK(ii,2)=NaN ; 
     end
 
     if  exist(SMAPfolderOK(ii,3))~=0;
@@ -59,7 +61,7 @@ SMAPfolderOK(ii,3)=string([char(DynamicAuxiliarySMAPRootPath) '\' char(string(ty
         dayOKwithSMAP(ii)=ii ; 
         else,  throw(MException('INPUT:ERROR', "SMAP file non available in existing folder. Program exiting.")) ;
         end
-    else SMAPfolderOK(ii,3)=NaN ;
+    else SMAPfolderOK(ii,3)=NaN ; SMAPfileOK(ii,3)=NaN ; 
     end
 
 end

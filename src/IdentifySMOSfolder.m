@@ -2,6 +2,8 @@ function [dayOK, dayOKwithSMOS, SMOSfolderOK, SMOSfileOK_SD, SMOSfileOK_SA] = Id
 
 [dayOK, sixhour]= size(L2OPdataOK) ; 
 % SMOSfolderOK=[] ;
+SMOSfileOK="" ; 
+SMOSfolderOK="" ; 
 daySMOS=0 ; 
 dayOKwithSMOS=zeros(dayOK,1) ;
 
@@ -37,7 +39,7 @@ SMOSfolderOK(ii,3)=string([char(DynamicAuxiliarySMOSRootPath) '\' char(string(ty
         % else, throw(MException('INPUT:ERROR', "SMOS file non available in existing folder. Program exiting.")) ;
         end
     end
-    else SMOSfolderOK(ii,1)=NaN ; 
+    else SMOSfolderOK(ii,1)=NaN ; SMOSfileOK(ii,1)=NaN ; 
     end
     
     if  exist(SMOSfolderOK(ii,2))~=0;
@@ -50,7 +52,7 @@ SMOSfolderOK(ii,3)=string([char(DynamicAuxiliarySMOSRootPath) '\' char(string(ty
         % else, throw(MException('INPUT:ERROR', "SMOS file non available in existing folder. Program exiting.")) ;
         end
     end     
-    else SMOSfolderOK(ii,2)=NaN ; 
+    else SMOSfolderOK(ii,2)=NaN ; SMOSfileOK(ii,2)=NaN ;
     end
 
     if  exist(SMOSfolderOK(ii,3))~=0;
@@ -64,7 +66,7 @@ SMOSfolderOK(ii,3)=string([char(DynamicAuxiliarySMOSRootPath) '\' char(string(ty
  
         end
     end
-    else SMOSfolderOK(ii,3)=NaN ;
+    else SMOSfolderOK(ii,3)=NaN ; SMOSfileOK(ii,3)=NaN ;
     end
 
 
