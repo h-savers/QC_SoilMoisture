@@ -110,6 +110,8 @@ end
 %%%%%%% Reading L2OP product for each six hour block 
 [vv, timeproduct_sixtotOK, L2OPdataOK, DateOK] = Read_L2G(numdays, L2OPfolder_sixtot, timeproduct_sixtot, ProductLevel, logfileID);
 
+%% Fill structure L2OPdataOK with [] in case its size is less than 4 (i.e., the last six hour block never appeared
+[a b]=size(L2OPdataOK) ; for ii=b+1:4;  L2OPdataOK(1,ii).ObservationUTCMidPointTime=[] ; end
 
 %%%%% identify and read Reference Satellite data 
  if RefSatellite=="SMAP"      
