@@ -19,80 +19,9 @@ end
 %    
 %%%%%%%  Read configuration file
 %
-            lines = string(splitlines(fileread(configurationPath)));
-%             
-%%         
-            ConfigRightLine= contains(lines,'RefSatellite')  ;  
-            ConfigRightLine= find(ConfigRightLine==1)  ;   
-            startIndex= regexp(lines(ConfigRightLine),'=') ; 
-            RefSatellite= extractAfter(lines(ConfigRightLine),startIndex) ;
-
-%%         
-            ConfigRightLine= contains(lines,'ProductLevel')  ;  
-            ConfigRightLine= find(ConfigRightLine==1)  ;   
-            startIndex= regexp(lines(ConfigRightLine),'=') ; 
-            ProductLevel= extractAfter(lines(ConfigRightLine),startIndex) ;
-%%         
-            ConfigRightLine= contains(lines,'ProcessingSatellite')  ;  
-            ConfigRightLine= find(ConfigRightLine==1)  ;   
-            startIndex= regexp(lines(ConfigRightLine),'=') ; 
-            ProcessingSatellite= extractAfter(lines(ConfigRightLine),startIndex) ;
-%%         
-            ConfigRightLine= contains(lines,'DataInputRootPath')  ;  
-            ConfigRightLine= find(ConfigRightLine==1)  ;   
-            startIndex= regexp(lines(ConfigRightLine),'=') ; 
-            DataInputRootPath= extractAfter(lines(ConfigRightLine),startIndex) ;
-%%         
-            ConfigRightLine= contains(lines,'DataOutputRootPath')  ;  
-            ConfigRightLine= find(ConfigRightLine==1)  ;   
-            startIndex= regexp(lines(ConfigRightLine),'=') ; 
-            DataOutputRootPath= extractAfter(lines(ConfigRightLine),startIndex) ;
-%%         
-            ConfigRightLine= contains(lines,'DynamicAuxiliarySMOSRootPath')  ;  
-            ConfigRightLine= find(ConfigRightLine==1)  ;   
-            startIndex= regexp(lines(ConfigRightLine),'=') ; 
-            DynamicAuxiliarySMOSRootPath= extractAfter(lines(ConfigRightLine),startIndex) ;
-%%         
-            ConfigRightLine= contains(lines,'DynamicAuxiliarySMAPRootPath')  ;  
-            ConfigRightLine= find(ConfigRightLine==1)  ;   
-            startIndex= regexp(lines(ConfigRightLine),'=') ; 
-            DynamicAuxiliarySMAPRootPath= extractAfter(lines(ConfigRightLine),startIndex) ;
-%%         
-            ConfigRightLine= contains(lines,'LogsOutputRootPath')  ;  
-            ConfigRightLine= find(ConfigRightLine==1)  ;   
-            startIndex= regexp(lines(ConfigRightLine),'=') ; 
-            LogsOutputRootPath= extractAfter(lines(ConfigRightLine),startIndex) ;
-%%                  
-            ConfigRightLine= contains(lines,'ThresholDist')  ;  
-            ConfigRightLine= find(ConfigRightLine==1)  ;   
-            startIndex= regexp(lines(ConfigRightLine),'=') ; 
-            ThresholDist= extractAfter(lines(ConfigRightLine),startIndex) ; % max distance between SP and SMAP grid cell in meters
-            ThresholDist=double(ThresholDist) ; 
-%%         
-            ConfigRightLine= contains(lines,'ThresholdTimeDelay')  ;  
-            ConfigRightLine= find(ConfigRightLine==1)  ;   
-            startIndex= regexp(lines(ConfigRightLine),'=') ; 
-            ThresholdTimeDelay= extractAfter(lines(ConfigRightLine),startIndex) ; % max time delay between SP time and SMAP Sm time in hours
-            ThresholdTimeDelay=double(ThresholdTimeDelay)  ; 
-%%         
-            ConfigRightLine= contains(lines,'ThrSameDist')  ;  
-            ConfigRightLine= find(ConfigRightLine==1)  ;   
-            startIndex= regexp(lines(ConfigRightLine),'=') ; 
-            ThrSameDist= extractAfter(lines(ConfigRightLine),startIndex) ; % max time delay between SP time and SMAP Sm time in hours
-            ThrSameDist=double(ThrSameDist)  ; % Distance tolerance for which two SMAP data can be considered equivalent
-
-%%         
-            ConfigRightLine= contains(lines,'ThrSameTime')  ;  
-            ConfigRightLine= find(ConfigRightLine==1)  ;   
-            startIndex= regexp(lines(ConfigRightLine),'=') ; 
-            ThrSameTime= extractAfter(lines(ConfigRightLine),startIndex) ; % max time delay between SP time and SMAP Sm time in hours
-            ThrSameTime=double(ThrSameTime)  ; % time tolerance for which two SMAP data can be considered equivalent
-
-%%         
-            ConfigRightLine= contains(lines,'ReportFolder')  ;  
-            ConfigRightLine= find(ConfigRightLine==1)  ;   
-            startIndex= regexp(lines(ConfigRightLine),'=') ; 
-            ReportFolder= extractAfter(lines(ConfigRightLine),startIndex) ; % max time delay between SP time and SMAP Sm time in hours
+[RefSatellite, ProductLevel, ProcessingSatellite, DataInputRootPath, DynamicAuxiliarySMOSRootPath,...
+    DynamicAuxiliarySMAPRootPath, LogsOutputRootPath, ThresholDist, ThresholdTimeDelay,...
+    ThrSameDist, ThrSameTime, ReportFolder] = ReadConfFile(configurationPath);
 
 %%%%%%%  End Read configuration file
 %
@@ -179,47 +108,9 @@ timeproduct=startDate+ii-1 ;
 end
 
 %%%%%%% Reading L2OP product for each six hour block 
+[vv, timeproduct_sixtotOK, L2OPdataOK, DateOK] = Read_L2G(numdays, L2OPfolder_sixtot, timeproduct_sixtot, ProductLevel, logfileID);
 
 
-L2OPfilename='L2OP-SSM.nc' ; 
-count_sixhour=0 ; 
-count_day=0 ; 
-vv=figure('Units', 'centimeters', 'Position', [0 0 21 29.7]) ;
-t=tiledlayout('flow') ; 
-title(t,'HydroGNSS L2G SSM maps')
-for ii=1:numdays
-    mm=0 ; 
-    for kk=1:4
-
-%             icount=ii+ii*(kk-1) ; 
-% icount=kk ; 
-        L2OPfolder=char(L2OPfolder_sixtot(ii,kk)) ;
-        if exist([L2OPfolder L2OPfilename]) 
-        mm=mm+1 ; 
-        count_sixhour=count_sixhour+1 ; 
-        if mm==1, count_day=count_day+1 ; end 
-        L2OPfolderOK(count_day,kk)=string(L2OPfolder) ;
-        timeproduct_sixtotOK(count_day,kk)=timeproduct_sixtot(ii, kk) ; 
-        L2OPdataOK(count_day,kk)=ReadL2OPproduct(count_sixhour, L2OPfolder, L2OPfilename, ProductLevel) ;
-        
-        nexttile
-        geoscatter(L2OPdataOK(count_day,kk).DataLatitude(:), L2OPdataOK(count_day,kk).DataLongitude(:),[], L2OPdataOK(count_day,kk).SoilMoisture(:) )
-        
-        DateOK(count_day)=extractBefore(string(timeproduct_sixtot(ii,1)),' ') ; 
-        title(['Day ' char(extractBefore(string(timeproduct_sixtot(ii,1)),' ')) ' - Six hour block ' char(string(kk))])
-        else
-        disp([char(datetime('now','Format','yyyy-MM-dd HH:mm:ss')) ' WARNING: six hour block ' L2OPfolder ' does not exist. Program continuing']) ; 
-       
-        %type([char(datetime('now','Format','yyyy-MM-dd HH:mm:ss')) ' WARNING PROVA: no selection of multiple nearest points. Program continuing']) ; 
-
-
-        % fprintf(1,[char(datetime('now','Format','yyyy-MM-dd HH:mm:ss')) ' WARNING: six hour block does not exist. Program continuing']) ; 
-        fprintf(logfileID,[char(datetime('now','Format','yyyy-MM-dd HH:mm:ss')) ' WARNING: six hour block does not exist. Program continuing']) ; 
-        fprintf(logfileID,'\n') ; 
-        end
-
-    end
-end
 %%%%% identify and read Reference Satellite data 
  if RefSatellite=="SMAP"      
 %% Identify SMAP product folders in the PDGS for day OK
