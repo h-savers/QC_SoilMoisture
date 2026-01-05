@@ -6,7 +6,11 @@ clearvars -except init_SM_Day final_SM_Day configurationPath
 f = waitbar(0,'QC-main running. Please wait...');
 
 pixelSMAP=964 ;
-lineSMAP=406 ; 
+lineSMAP=406 ;
+%% MP added SMAP 9km
+pixelSMAP09=3856 ; 
+lineSMAP09=1624 ; 
+%%
 pixelSMOS=1388 ;
 lineSMOS=584 ; 
 % tic
@@ -153,14 +157,16 @@ SMAPLatitude=[SMAP(ii,1).latitude_AM(:); SMAP(ii,2).latitude_AM(:); SMAP(ii,3).l
     SMAP(ii,1).latitude_PM(:); SMAP(ii,2).latitude_PM(:); SMAP(ii,3).latitude_PM(:)] ;
 SMAPLongitude=[SMAP(ii,1).longitude_AM(:); SMAP(ii,2).longitude_AM(:); SMAP(ii,3).longitude_AM(:);...
     SMAP(ii,1).longitude_PM(:); SMAP(ii,2).longitude_PM(:); SMAP(ii,3).longitude_PM(:)] ;
-
+% clear SMAP
 
 HydroSoilMoisture=[L2OPdataOK(ii,1).SoilMoisture(:); L2OPdataOK(ii,2).SoilMoisture(:);L2OPdataOK(ii,3).SoilMoisture(:);L2OPdataOK(ii,4).SoilMoisture(:)] ;
 HydroTime=[L2OPdataOK(ii,1).ObservationUTCMidPointTime(:); L2OPdataOK(ii,2).ObservationUTCMidPointTime(:);L2OPdataOK(ii,3).ObservationUTCMidPointTime(:);L2OPdataOK(ii,4).ObservationUTCMidPointTime(:)] ;
 HydroLat=[L2OPdataOK(ii,1).DataLatitude(:); L2OPdataOK(ii,2).DataLatitude(:);L2OPdataOK(ii,3).DataLatitude(:);L2OPdataOK(ii,4).DataLatitude(:)] ;
 HydroLon=[L2OPdataOK(ii,1).DataLongitude(:); L2OPdataOK(ii,2).DataLongitude(:);L2OPdataOK(ii,3).DataLongitude(:);L2OPdataOK(ii,4).DataLongitude(:)] ;
 HydroSSMQuality=[L2OPdataOK(ii,1).SSMQuality(:); L2OPdataOK(ii,2).SSMQuality(:);L2OPdataOK(ii,3).SSMQuality(:);L2OPdataOK(ii,4).SSMQuality(:)] ;
-
+% clear L2OPdataOK
+HydroLat=single(HydroLat) ; 
+HydroLon=single(HydroLon) ; 
 Nomissed=find(ismissing(HydroTime)==0) ; 
 
 HydroSoilMoisture=HydroSoilMoisture(Nomissed) ;
@@ -174,7 +180,7 @@ IndexRetrieved=find(isnan(HydroSoilMoisture)==0) ;
 PercSMretrieve(ii)=100*length(IndexRetrieved)/length(HydroSoilMoisture) ; % Percentage of retrievals in output HydroGNNS L2 product 
 for ff=1:32, Flag(ii,ff)=length(find(bitget(HydroSSMQuality(IndexRetrieved),ff)==1)); end 
 PercSM_Flag1_good(ii)=100*length(find(bitget(HydroSSMQuality(IndexRetrieved),1)==0))/length(find(isnan(HydroSoilMoisture)==0)) ; % Percentage of retrievals in output HydroGNNS L2 product 
-
+clear IndexRetrieved
 Hydrononan=find(isnan(HydroSoilMoisture)==0) ;
 HydroSoilMoisture=HydroSoilMoisture(Hydrononan) ;
 HydroTime=HydroTime(Hydrononan) ;
@@ -203,20 +209,31 @@ mindelay=[] ;
 e = referenceEllipsoid('WGS84') ;
 % for ipoint=1: HydroPoints
 % arclen2= distance(HydroLat(ipoint),HydroLon(ipoint), SMAPLatitude, SMAPLongitude,e) ;
-[arclen, pippo]= Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude'; SMAPLongitude']) ;
+arclen= Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude'; SMAPLongitude']) ;
+clear SMAPLatitude SMAPLongitude
+
 arclen=arclen*1000 ; 
 pippo=isnan(arclen); 
 maxpippo=max(pippo(:)) ; 
 if max(pippo)==1,  pause(60), end 
 % mindist(ipoint)=min(arclen) ;
 clear pippo
-HydrotimeAll=repmat(datetime(HydroTime), 1,SMAPPoints) ;
+% HydrotimeAll=repmat(datetime(HydroTime), 1,SMAPPoints) ;
+% clear HydroTime
+
 % % if RefSatellite=="SMAP", SMAPtimeAll=repmat(datetime(extractBefore(SMAPTime, 'Z'))', HydroPoints,1 ) ;
 % % else SMAPtimeAll=repmat(datetime(SMAPTime)', HydroPoints,1 ) ;
 % % end
-SMAPtimeAll=repmat(datetime(SMAPTime)', HydroPoints,1 ) ;
-DelayPoints=HydrotimeAll-SMAPtimeAll ; 
-clear HydrotimeAll HydrotimeAll ; 
+% DelayPoints=repmat(datetime(SMAPTime)', HydroPoints,1 ) ;
+% clear SMAPTime
+
+% DelayPoints=HydrotimeAll-DelayPoints ; 
+
+% DelayPoints=HydrotimeAll-repmat(datetime(SMAPTime)', HydroPoints,1 ) ;
+DelayPoints=repmat(datetime(HydroTime), 1,SMAPPoints)-repmat(datetime(SMAPTime)', HydroPoints,1 ) ;
+clear HydroTime SMAPTime
+
+% clear SMAPTime HydrotimeAll  ; 
 % datetime(repmat(HydroTime, 1,SMAPPoints))- repmat(datetime(extractBefore(SMAPTime, 'Z'))', HydroPoints,1 ) ;
 % mindelay(ipoint)=min(abs(hours(DelayPoints))) ; 
 empty=0 ; 
