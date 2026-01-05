@@ -24,8 +24,8 @@ end
 %%%%%%%  Read configuration file
 %
 [RefSatellite, ProductLevel, ProcessingSatellite, DataInputRootPath, DynamicAuxiliarySMOSRootPath,...
-    DynamicAuxiliarySMAPRootPath, LogsOutputRootPath, ThresholDist, ThresholdTimeDelay,...
-    ThrSameDist, ThrSameTime, ReportFolder] = ReadConfFile(configurationPath);
+    DynamicAuxiliarySMAPRootPath, DynamicAuxiliarySMAP09RootPath, LogsOutputRootPath, ThresholDist, ThresholdTimeDelay,...
+    ThrSameDist, ThrSameTime, Threshold09Dist, Thr09SameDist, ReportFolder] = ReadConfFile(configurationPath);
 
 %%%%%%%  End Read configuration file
 %
@@ -42,7 +42,7 @@ logfileID = fopen([char(LogsOutputRootPath) '\' namelogfile], 'a+') ;
 %%%%%%% End open log file
 %
 % if ProductLevel~='L2G' & ProductLevel~='L3' 
-    if ProductLevel~='L2G' 
+    if ProductLevel~='L2G' & ProductLevel~='L3' 
 
         disp([char(datetime('now','Format','yyyy-MM-dd HH:mm:ss')) ' ERROR: Wrong product level. Program exiting']) ; 
         % fprintf(1,[char(datetime('now','Format','yyyy-MM-dd HH:mm:ss')) ' ERROR: Wrong product level. Program exiting']) ; 

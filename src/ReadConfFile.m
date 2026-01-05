@@ -1,4 +1,7 @@
-function [RefSatellite, ProductLevel, ProcessingSatellite, DataInputRootPath, DynamicAuxiliarySMOSRootPath, DynamicAuxiliarySMAPRootPath, LogsOutputRootPath, ThresholDist, ThresholdTimeDelay, ThrSameDist, ThrSameTime, ReportFolder] = ReadConfFile(configurationPath)
+function [RefSatellite, ProductLevel, ProcessingSatellite, DataInputRootPath, DynamicAuxiliarySMOSRootPath,...
+          DynamicAuxiliarySMAPRootPath, DynamicAuxiliarySMAP09RootPath, LogsOutputRootPath, ThresholDist, ThresholdTimeDelay, ThrSameDist,...
+          ThrSameTime, Threshold09Dist, Thr09SameDist, ReportFolder] = ReadConfFile(configurationPath)
+
             lines = string(splitlines(fileread(configurationPath)));
 %             
 %%         
@@ -38,6 +41,11 @@ function [RefSatellite, ProductLevel, ProcessingSatellite, DataInputRootPath, Dy
             startIndex= regexp(lines(ConfigRightLine),'=') ; 
             DynamicAuxiliarySMAPRootPath= extractAfter(lines(ConfigRightLine),startIndex) ;
 %%         
+            ConfigRightLine= contains(lines,'DynamicAuxiliarySMAP09RootPath')  ;  
+            ConfigRightLine= find(ConfigRightLine==1)  ;   
+            startIndex= regexp(lines(ConfigRightLine),'=') ; 
+            DynamicAuxiliarySMAP09RootPath= extractAfter(lines(ConfigRightLine),startIndex) ;
+%%       
             ConfigRightLine= contains(lines,'LogsOutputRootPath')  ;  
             ConfigRightLine= find(ConfigRightLine==1)  ;   
             startIndex= regexp(lines(ConfigRightLine),'=') ; 
@@ -67,7 +75,18 @@ function [RefSatellite, ProductLevel, ProcessingSatellite, DataInputRootPath, Dy
             startIndex= regexp(lines(ConfigRightLine),'=') ; 
             ThrSameTime= extractAfter(lines(ConfigRightLine),startIndex) ; % max time delay between SP time and SMAP Sm time in hours
             ThrSameTime=double(ThrSameTime)  ; % time tolerance for which two SMAP data can be considered equivalent
-
+%%         
+            ConfigRightLine= contains(lines,'Threshold09Dist')  ;  
+            ConfigRightLine= find(ConfigRightLine==1)  ;   
+            startIndex= regexp(lines(ConfigRightLine),'=') ; 
+            Threshold09Dist= extractAfter(lines(ConfigRightLine),startIndex) ; % max time delay between SP time and SMAP Sm time in hours
+            Threshold09Dist=double(Threshold09Dist) ;    
+%%         
+            ConfigRightLine= contains(lines,'Thr09SameDist')  ;  
+            ConfigRightLine= find(ConfigRightLine==1)  ;   
+            startIndex= regexp(lines(ConfigRightLine),'=') ; 
+            Thr09SameDist= extractAfter(lines(ConfigRightLine),startIndex) ; % max time delay between SP time and SMAP Sm time in hours
+            Thr09SameDist=double(Thr09SameDist)  ; % Distance tolerance for which two SMAP data can be considered equivalent
 %%         
             ConfigRightLine= contains(lines,'ReportFolder')  ;  
             ConfigRightLine= find(ConfigRightLine==1)  ;   
