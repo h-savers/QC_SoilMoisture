@@ -59,11 +59,11 @@ clear latlon1  latlon2
 % deltaLon=lon2all-lon1all;
 % clear lon1all  lon2all 
 
-lon1all=lat2all-lat1all;
-lon2all=lon2all-lon1all;
+% lon1all=lat2all-lat1all;
+% lon2all=lon2all-;
 
 % a=sin((deltaLat)/2).^2 + cos(lat1all).*cos(lat2all).* sin(deltaLon/2).^2;
-lat1all=sin((lon1all)/2).^2 + cos(lat1all).*cos(lat2all).* sin(lon2all/2).^2;
+lat1all=sin((lat2all-lat1all)/2).^2 + cos(lat1all).*cos(lat2all).* sin((lon2all-lon1all)/2).^2;
 
 % clear deltaLat lat1all lat2all deltaLon 
 clear lon1all lat2all lon2all 

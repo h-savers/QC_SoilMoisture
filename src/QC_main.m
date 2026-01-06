@@ -121,8 +121,14 @@ end
  if RefSatellite=="SMAP"      
 %% Identify SMAP product folders in the PDGS for day OK
  [dayOK, dayOKwithSMAP, SMAPfolderOK, SMAPfileOK] = IdentifySMAPfolder(L2OPdataOK, timeproduct_sixtotOK, DynamicAuxiliarySMAPRootPath);
-%% read SMAP data
+%% read SMAP 36 km data
  SMAP = ReadSMAP(dayOKwithSMAP, SMAPfileOK, SMAPfolderOK, pixelSMAP, lineSMAP);
+
+ elseif RefSatellite=="SMAP09"
+
+ [dayOK, dayOKwithSMAP, SMAPfolderOK, SMAPfileOK] = IdentifySMAPfolder(L2OPdataOK, timeproduct_sixtotOK, DynamicAuxiliarySMAP09RootPath);
+%% read SMAP 9 km data
+ SMAP = ReadSMAP(dayOKwithSMAP, SMAPfileOK, SMAPfolderOK, pixelSMAP09, lineSMAP09);
 
  elseif RefSatellite=="SMOS"
 % Identify SMOS product folders in the PDGS for day OK
@@ -187,9 +193,10 @@ HydroTime=HydroTime(Hydrononan) ;
 HydroLat=HydroLat(Hydrononan) ;
 HydroLon=HydroLon(Hydrononan)  ; 
 
+SMAPTime(contains(SMAPTime, "N/A")==1)="NaT" ;  % needed as the first element of SMAP UTC time in SMAP 09 km is "N/A" 
 % SMAPnonan=find(SMAPSoilMoisture ~= -9999 & isnan(SMAPSoilMoisture)==0) ;
-SMAPnonan=find(SMAPSoilMoisture ~= -9999 & isnan(SMAPSoilMoisture)==0 & datetime(SMAPTime) > min(datetime(HydroTime))- ThresholdTimeDelay/24 ...
-    & datetime(SMAPTime) < max(datetime(HydroTime))+ ThresholdTimeDelay/24) ;
+SMAPnonan=find(SMAPSoilMoisture ~= -9999 & isnan(SMAPSoilMoisture)==0 & datetime(SMAPTime, 'InputFormat', 'yyyy-MM-dd''T''HH:mm:ss.SSS') > min(datetime(HydroTime))- ThresholdTimeDelay/24 ...
+    & datetime(SMAPTime, 'InputFormat', 'yyyy-MM-dd''T''HH:mm:ss.SSS') < max(datetime(HydroTime))+ ThresholdTimeDelay/24) ;
 
 SMAPSoilMoisture=SMAPSoilMoisture(SMAPnonan) ; 
 SMAPTime=SMAPTime(SMAPnonan) ; 
