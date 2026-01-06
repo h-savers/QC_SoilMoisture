@@ -261,6 +261,7 @@ clear HydroTime SMAPTime
 % mindelay(ipoint)=min(abs(hours(DelayPoints))) ; 
 empty=0 ; 
 for ipoint=1: HydroPoints
+    disp(['Colocate HydroGNSS point ' num2str(ipoint) ' of ' num2str(HydroPoints)]) 
     if savespace=='Yes'
     NearPoints=find(mfile.arclen(ipoint,:) < ThresholDist & abs(hours(mfile.DelayPoints(ipoint,:))) <= ThresholdTimeDelay) ;
     else
@@ -285,7 +286,16 @@ if isempty(NearPoints)==1 ;
         if savespace=='Yes'
             mindist(ipoint)=min(mfile.arclen(ipoint,:)) ; 
             % try
+            if b<=2
             bestpoint=find(mfile.arclen(ipoint,NearPoints) < mindist(ipoint) + ThrSameDist & abs(hours(mfile.DelayPoints(ipoint,NearPoints))) < min(abs(hours(mfile.DelayPoints(ipoint,NearPoints))))+ThrSameTime) ; 
+            elseif b>2 & b>=4 
+            bestpoint=find([mfile.arclen(ipoint,NearPoints(1:2)) mfile.arclen(ipoint,NearPoints(3:end))] < mindist(ipoint) + ThrSameDist...
+                & [abs(hours(mfile.DelayPoints(ipoint,NearPoints(1:2)))) abs(hours(mfile.DelayPoints(ipoint,NearPoints(3:end))))]...
+                < min([abs(hours(mfile.DelayPoints(ipoint,NearPoints(1:2)))) abs(hours(mfile.DelayPoints(ipoint,NearPoints(3:end))))]+ThrSameTime)) ; 
+            else 
+            disp(['NearPoints>4 at point ' num2str(ipoint)]) 
+            pause
+            end
             % catch
             % pause 
             % end
