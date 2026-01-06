@@ -87,7 +87,8 @@ numdays=ceil(juliandate(endDate)-juliandate(startDate)) ; %devo mettere +1 ?????
 %%%% find out HydroGNSS file folder and names for the specified time frame
 for ii=1:numdays
 timeproduct=startDate+ii-1 ; 
-    for kk=1:4
+
+for kk=1:4
     timeproductsix=timeproduct+hours((kk-1)*6) ; 
     timeproduct_sixtot(ii, kk)=timeproductsix ; 
     [tyear, tmonth, tday]=ymd(timeproductsix) ; 
@@ -288,7 +289,7 @@ if isempty(NearPoints)==1 ;
             % try
             if b<=2
             bestpoint=find(mfile.arclen(ipoint,NearPoints) < mindist(ipoint) + ThrSameDist & abs(hours(mfile.DelayPoints(ipoint,NearPoints))) < min(abs(hours(mfile.DelayPoints(ipoint,NearPoints))))+ThrSameTime) ; 
-            elseif b>2 & b>=4 
+            elseif b>2 & b<=4 
             bestpoint=find([mfile.arclen(ipoint,NearPoints(1:2)) mfile.arclen(ipoint,NearPoints(3:end))] < mindist(ipoint) + ThrSameDist...
                 & [abs(hours(mfile.DelayPoints(ipoint,NearPoints(1:2)))) abs(hours(mfile.DelayPoints(ipoint,NearPoints(3:end))))]...
                 < min([abs(hours(mfile.DelayPoints(ipoint,NearPoints(1:2)))) abs(hours(mfile.DelayPoints(ipoint,NearPoints(3:end))))]+ThrSameTime)) ; 
