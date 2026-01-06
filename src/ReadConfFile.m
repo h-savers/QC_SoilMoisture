@@ -1,4 +1,4 @@
-function [RefSatellite, ProductLevel, ProcessingSatellite, DataInputRootPath, DynamicAuxiliarySMOSRootPath,...
+function [RefSatellite, ProductLevel, ProcessingSatellite, savespace, MATfileFolder, DataInputRootPath, DynamicAuxiliarySMOSRootPath,...
           DynamicAuxiliarySMAPRootPath, DynamicAuxiliarySMAP09RootPath, LogsOutputRootPath, ThresholDist, ThresholdTimeDelay, ThrSameDist,...
           ThrSameTime, Threshold09Dist, Thr09SameDist, ReportFolder] = ReadConfFile(configurationPath)
 
@@ -20,6 +20,18 @@ function [RefSatellite, ProductLevel, ProcessingSatellite, DataInputRootPath, Dy
             ConfigRightLine= find(ConfigRightLine==1)  ;   
             startIndex= regexp(lines(ConfigRightLine),'=') ; 
             ProcessingSatellite= extractAfter(lines(ConfigRightLine),startIndex) ;
+
+%%         
+            ConfigRightLine= contains(lines,'savespace')  ;  
+            ConfigRightLine= find(ConfigRightLine==1)  ;   
+            startIndex= regexp(lines(ConfigRightLine),'=') ; 
+            savespace= extractAfter(lines(ConfigRightLine),startIndex) ;  
+%%         
+            ConfigRightLine= contains(lines,'MATfileFolder')  ;  
+            ConfigRightLine= find(ConfigRightLine==1)  ;   
+            startIndex= regexp(lines(ConfigRightLine),'=') ; 
+            MATfileFolder= extractAfter(lines(ConfigRightLine),startIndex) ;  
+            MATfileFolder=char(MATfileFolder)
 %%         
             ConfigRightLine= contains(lines,'DataInputRootPath')  ;  
             ConfigRightLine= find(ConfigRightLine==1)  ;   
