@@ -69,6 +69,7 @@ lat1all=sin((lat2all-lat1all)/2).^2 + cos(lat1all).*cos(lat2all).* sin((lon2all-
 clear lon1all lat2all lon2all 
 
 %c=2.*atan2(sqrt(a),sqrt(1-a));
+lat1all(lat1all<0)=0 ;  lat1all(lat1all>1)=1 ; 
 lat1all=2.*atan2(sqrt(lat1all),sqrt(1-lat1all));
 
 % clear a 

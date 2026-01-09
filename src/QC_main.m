@@ -87,7 +87,8 @@ numdays=ceil(juliandate(endDate)-juliandate(startDate)) ; %devo mettere +1 ?????
 %%%% find out HydroGNSS file folder and names for the specified time frame
 for ii=1:numdays
 timeproduct=startDate+ii-1 ; 
-
+   switch ProductLevel
+   case "L2G"
 for kk=1:4
     timeproductsix=timeproduct+hours((kk-1)*6) ; 
     timeproduct_sixtot(ii, kk)=timeproductsix ; 
@@ -107,16 +108,32 @@ for kk=1:4
    % L2OPfolder_sixtot(ii+ii*(kk-1))=string(L2OPfoldername) ; % vector with full folder path of L2OP product files
     L2OPfolder_sixtot(ii, kk)=string(L2OPfoldername) ; % matrix [num of days x 4 six hour block per day] vector with full folder path of L2OP product files
 
-
     % end 
+end  % end loop on the 6 six hour bloch per day
+    case "L3"
+    kk=1 ; 
+    timeproductsix=timeproduct+hours((kk-1)*6) ; 
+    timeproduct_sixtot(ii, kk)=timeproductsix ; 
+    [tyear, tmonth, tday]=ymd(timeproductsix) ; 
+    [thour, tmin, tsec]=hms(timeproductsix) ;
+        if tday< 10, charday=['0' char(string(tday))] ; else charday= char(string(tday)); end
+        if tmonth< 10, charmonth=['0' char(string(tmonth))] ; else charmonth= char(string(tmonth)); end
+    L2OPfoldername=[char(DataInputRootPath) '\DataRelease\L3OP-SSM\' char(string(tyear)) '-' charmonth '\' charday '\'] ;
+    L2OPfolder_sixtot(ii, kk)=string(L2OPfoldername) ; % vector with full folder path of L2OP L3 product files
     end
-end
-
-%%%%%%% Reading L2OP product for each six hour block 
+end  % % end loop on the days
+%
+   switch ProductLevel
+   case "L2G"
+%%%%%%% Reading L2OP product for each six hour block and all days 
 [vv, timeproduct_sixtotOK, L2OPdataOK, DateOK] = Read_L2G(numdays, L2OPfolder_sixtot, timeproduct_sixtot, ProductLevel, logfileID);
-
 %% Fill structure L2OPdataOK with [] in case its size is less than 4 (i.e., the last six hour block never appeared
 [a b]=size(L2OPdataOK) ; for ii=b+1:4;  L2OPdataOK(1,ii).ObservationUTCMidPointTime=[] ; end
+   case "L3"
+%%%%%%% Reading L3 product for each day 
+[vv, timeproduct_sixtotOK, L2OPdataOK, DateOK] = Read_L3(numdays, L2OPfolder_sixtot, timeproduct_sixtot, ProductLevel, logfileID);
+   end
+
 
 %%%%% identify and read Reference Satellite data 
  if RefSatellite=="SMAP"      
@@ -155,7 +172,9 @@ HydroSMtoplotLat=[] ;
 HydroSMtoplotLon=[] ; 
 
 for ii=dayOKwithSMAP' 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% for L3 we should considere one single day 
+switch ProductLevel
+    case "L2G" 
 SMAPSoilMoisture=[SMAP(ii,1).SoilMoisture_AM_REF(:); SMAP(ii,2).SoilMoisture_AM_REF(:); SMAP(ii,3).SoilMoisture_AM_REF(:) ;...
     SMAP(ii,1).SoilMoisture_PM_REF(:); SMAP(ii,2).SoilMoisture_PM_REF(:); SMAP(ii,3).SoilMoisture_PM_REF(:) ] ;
 SMAPTime=[SMAP(ii,1).tb_time_AM_REF(:); SMAP(ii,2).tb_time_AM_REF(:) ; SMAP(ii,3).tb_time_AM_REF(:);...
@@ -172,6 +191,21 @@ HydroLat=[L2OPdataOK(ii,1).DataLatitude(:); L2OPdataOK(ii,2).DataLatitude(:);L2O
 HydroLon=[L2OPdataOK(ii,1).DataLongitude(:); L2OPdataOK(ii,2).DataLongitude(:);L2OPdataOK(ii,3).DataLongitude(:);L2OPdataOK(ii,4).DataLongitude(:)] ;
 HydroSSMQuality=[L2OPdataOK(ii,1).SSMQuality(:); L2OPdataOK(ii,2).SSMQuality(:);L2OPdataOK(ii,3).SSMQuality(:);L2OPdataOK(ii,4).SSMQuality(:)] ;
 % clear L2OPdataOK
+    
+    case "L3"
+SMAPSoilMoisture=[SMAP(ii,2).SoilMoisture_AM_REF(:); SMAP(ii,2).SoilMoisture_PM_REF(:)]; 
+SMAPTime=[SMAP(ii,2).tb_time_AM_REF(:) ; SMAP(ii,2).tb_time_PM_REF(:)] ;
+SMAPLatitude=[SMAP(ii,2).latitude_AM(:); SMAP(ii,2).latitude_PM(:)] ;
+SMAPLongitude=[SMAP(ii,2).longitude_AM(:); SMAP(ii,2).longitude_PM(:)] ;
+
+HydroSoilMoisture=L2OPdataOK(ii,1).SoilMoisture(:) ;
+HydroTime=L2OPdataOK(ii,1).ObservationUTCMidPointTime(:) ;
+HydroLat=L2OPdataOK(ii,1).DataLatitude(:); 
+HydroLon=L2OPdataOK(ii,1).DataLongitude(:);
+HydroSSMQuality=L2OPdataOK(ii,1).SSMQuality(:); 
+
+end
+
 HydroLat=single(HydroLat) ; 
 HydroLon=single(HydroLon) ; 
 Nomissed=find(ismissing(HydroTime)==0) ; 
@@ -264,9 +298,9 @@ empty=0 ;
 for ipoint=1: HydroPoints
     disp(['Colocate HydroGNSS point ' num2str(ipoint) ' of ' num2str(HydroPoints)]) 
     if savespace=='Yes'
-    NearPoints=find(mfile.arclen(ipoint,:) < ThresholDist & abs(hours(mfile.DelayPoints(ipoint,:))) <= ThresholdTimeDelay) ;
+    NearPoints=find(mfile.arclen(ipoint,:) < ThresholDist & abs(mfile.DelayPoints(ipoint,:)) <= ThresholdTimeDelay) ;
     else
-    NearPoints=find(arclen(ipoint,:) < ThresholDist & abs(hours(DelayPoints(ipoint,:))) <= ThresholdTimeDelay) ;
+    NearPoints=find(arclen(ipoint,:) < ThresholDist & abs(DelayPoints(ipoint,:)) <= ThresholdTimeDelay) ;
     end
 if isempty(NearPoints)==1 ;
     SMAPSMtoplot(ii,ipoint)=NaN ; 
@@ -288,11 +322,11 @@ if isempty(NearPoints)==1 ;
             mindist(ipoint)=min(mfile.arclen(ipoint,:)) ; 
             % try
             if b<=2
-            bestpoint=find(mfile.arclen(ipoint,NearPoints) < mindist(ipoint) + ThrSameDist & abs(hours(mfile.DelayPoints(ipoint,NearPoints))) < min(abs(hours(mfile.DelayPoints(ipoint,NearPoints))))+ThrSameTime) ; 
+            bestpoint=find(mfile.arclen(ipoint,NearPoints) < mindist(ipoint) + ThrSameDist & abs(mfile.DelayPoints(ipoint,NearPoints)) < min(abs(mfile.DelayPoints(ipoint,NearPoints)))+ThrSameTime) ; 
             elseif b>2 & b<=4 
             bestpoint=find([mfile.arclen(ipoint,NearPoints(1:2)) mfile.arclen(ipoint,NearPoints(3:end))] < mindist(ipoint) + ThrSameDist...
-                & [abs(hours(mfile.DelayPoints(ipoint,NearPoints(1:2)))) abs(hours(mfile.DelayPoints(ipoint,NearPoints(3:end))))]...
-                < min([abs(hours(mfile.DelayPoints(ipoint,NearPoints(1:2)))) abs(hours(mfile.DelayPoints(ipoint,NearPoints(3:end))))]+ThrSameTime)) ; 
+                & [abs(mfile.DelayPoints(ipoint,NearPoints(1:2))) abs(mfile.DelayPoints(ipoint,NearPoints(3:end)))]...
+                < min([abs(mfile.DelayPoints(ipoint,NearPoints(1:2))) abs(mfile.DelayPoints(ipoint,NearPoints(3:end)))]+ThrSameTime)) ; 
             else 
             disp(['NearPoints>4 at point ' num2str(ipoint)]) 
             pause
@@ -302,7 +336,7 @@ if isempty(NearPoints)==1 ;
             % end
         else
             mindist(ipoint)=min(arclen(ipoint,:)) ; 
-            bestpoint=find(arclen(ipoint,NearPoints) < mindist(ipoint) + ThrSameDist & abs(hours(DelayPoints(ipoint,NearPoints))) < min(abs(hours(DelayPoints(ipoint,NearPoints))))+ThrSameTime) ; 
+            bestpoint=find(arclen(ipoint,NearPoints) < mindist(ipoint) + ThrSameDist & abs(DelayPoints(ipoint,NearPoints)) < min(abs(DelayPoints(ipoint,NearPoints)))+ThrSameTime) ; 
         end
         [a b]=size(bestpoint) ; 
         if b ==1 ;
@@ -513,7 +547,8 @@ exportgraphics(vvvv,reportfile, 'Append', true) ;
  fprintf(logfileID,[char(datetime('now','Format','yyyy-MM-dd HH:mm:ss')) ' INFO: End of program']) ; 
  fprintf(logfileID,'\n') ; 
 
-f = waitbar(1,f, 'End of program');
+waitbar(1,f, 'End of program');
+close(f) ;
 
 end
 

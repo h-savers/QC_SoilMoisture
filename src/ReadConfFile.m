@@ -31,7 +31,7 @@ function [RefSatellite, ProductLevel, ProcessingSatellite, savespace, MATfileFol
             ConfigRightLine= find(ConfigRightLine==1)  ;   
             startIndex= regexp(lines(ConfigRightLine),'=') ; 
             MATfileFolder= extractAfter(lines(ConfigRightLine),startIndex) ;  
-            MATfileFolder=char(MATfileFolder)
+            MATfileFolder=char(MATfileFolder) ;
 %%         
             ConfigRightLine= contains(lines,'DataInputRootPath')  ;  
             ConfigRightLine= find(ConfigRightLine==1)  ;   
