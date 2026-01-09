@@ -171,6 +171,11 @@ HydroSMtoplot=[] ;
 HydroSMtoplotLat=[] ; 
 HydroSMtoplotLon=[] ; 
 
+% prepare figure with SMAP/SMOS maps
+vvvvv=figure('Units', 'centimeters', 'Position', [0 0 21 29.7]) ;
+tt=tiledlayout('flow') ; 
+title(tt, [char(RefSatellite) ' SSM maps [%]'])
+%
 for ii=dayOKwithSMAP' 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% for L3 we should considere one single day 
 switch ProductLevel
@@ -265,7 +270,11 @@ else
     pippo=isnan(arclen); 
 end
 
+figure(vvvvv) ; nexttile ; geoscatter(SMAPLatitude, SMAPLongitude, [5] , 100.*SMAPSoilMoisture, 'filled')
+colorbar ; 
+title(['Day ' char(extractBefore(string(SMAPTime(ii,1)),'T')) ])
 clear SMAPLatitude SMAPLongitude
+
 maxpippo=max(pippo(:)) ; 
 if max(pippo)==1,  pause(60), end 
 % mindist(ipoint)=min(arclen) ;
@@ -391,7 +400,7 @@ R=corrcoef(pippo(noerrornan), pluto(noerrornan)) ;
 corrcoe(ii)=R(1,2) ; 
 corrcoe2(ii)=mean((pippo(noerrornan)-mean(pippo(noerrornan))).*(pluto(noerrornan)-mean(pluto(noerrornan))))./std(pluto(noerrornan))/std(pippo(noerrornan)) ;
 
-geoscatter(HydroSMtoplotLat(ii,noerrornan),HydroSMtoplotLon(ii,noerrornan), [], error)
+geoscatter(HydroSMtoplotLat(ii,noerrornan),HydroSMtoplotLon(ii,noerrornan), 50, error, 'filled')
 ax2=gca ; 
 end
 colorbar('southoutside')

@@ -4,7 +4,7 @@ L3OPfilename='L3OP-SSM.nc' ;
 count_day=0 ; 
 vv=figure('Units', 'centimeters', 'Position', [0 0 21 29.7]) ;
 t=tiledlayout('flow') ; 
-title(t,'HydroGNSS L3 SSM maps')
+title(t,'HydroGNSS L3 SSM maps [%]')
 for ii=1:numdays
     mm=0 ; 
 %             icount=ii+ii*(kk-1) ; 
@@ -20,8 +20,9 @@ for ii=1:numdays
         L3OPdataOK(count_day,kk)=ReadL3OPproduct(L3OPfolder, L3OPfilename, ProductLevel) ;
         
         nexttile
-        geoscatter(L3OPdataOK(count_day).DataLatitude(:), L3OPdataOK(count_day).DataLongitude(:),[], L3OPdataOK(count_day).SoilMoisture(:) )
-        
+        geoscatter(L3OPdataOK(count_day).DataLatitude(:), L3OPdataOK(count_day).DataLongitude(:),[10], L3OPdataOK(count_day).SoilMoisture(:), 'filled' )
+        colorbar('limits', [0 50], 'LimitsMode', 'manual') ; 
+        caxis([0 50]);
         DateOK(count_day)=extractBefore(string(timeproduct_sixtot(ii,1)),' ') ; 
         title(['Day ' char(extractBefore(string(timeproduct_sixtot(ii,1)),' ')) ])
         else
