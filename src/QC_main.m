@@ -336,9 +336,13 @@ if isempty(NearPoints)==1 ;
             bestpoint=find([mfile.arclen(ipoint,NearPoints(1:2)) mfile.arclen(ipoint,NearPoints(3:end))] < mindist(ipoint) + ThrSameDist...
                 & [abs(mfile.DelayPoints(ipoint,NearPoints(1:2))) abs(mfile.DelayPoints(ipoint,NearPoints(3:end)))]...
                 < min([abs(mfile.DelayPoints(ipoint,NearPoints(1:2))) abs(mfile.DelayPoints(ipoint,NearPoints(3:end)))]+ThrSameTime)) ; 
+            elseif b>4 & b<=6 
+            bestpoint=find([mfile.arclen(ipoint,NearPoints(1:3)) mfile.arclen(ipoint,NearPoints(4:end))] < mindist(ipoint) + ThrSameDist...
+                & [abs(mfile.DelayPoints(ipoint,NearPoints(1:3))) abs(mfile.DelayPoints(ipoint,NearPoints(4:end)))]...
+                < min([abs(mfile.DelayPoints(ipoint,NearPoints(1:3))) abs(mfile.DelayPoints(ipoint,NearPoints(4:end)))]+ThrSameTime)) ; 
             else 
-            disp(['NearPoints>4 at point ' num2str(ipoint)]) 
-            pause
+            disp(['NearPoints>6 at point ' num2str(ipoint)]) 
+            
             end
             % catch
             % pause 
