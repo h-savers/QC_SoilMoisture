@@ -246,6 +246,10 @@ SMAPLongitude=SMAPLongitude(SMAPnonan) ;
 clear SMAPnonan HydroSSMQuality Hydrononan
 
 [HydroPoints b]=size(HydroSoilMoisture)  ;
+    SMAPSMtoplot=NaN(ii,HydroPoints) ; 
+    HydroSMtoplot=NaN(ii,HydroPoints) ;
+    HydroSMtoplotLat=NaN(ii,HydroPoints) ; 
+    HydroSMtoplotLon=NaN(ii,HydroPoints) ; 
 [SMAPPoints b]=size(SMAPSoilMoisture)  ;
 HydroGNSSnumber(ii)=HydroPoints ; 
 disp([char(datetime('now','Format','yyyy-MM-dd HH:mm:ss')) ' INFO: selection of SMAP and HydroGNSS files on day ' char(string(ii)) ' to be colocated terminated. Program continuing']) ; 
@@ -253,135 +257,215 @@ disp([char(datetime('now','Format','yyyy-MM-dd HH:mm:ss')) ' INFO: selection of 
         fprintf(logfileID,'\n') ; 
         waitbar(ii/dayOK-0.1,f, 'QC-main progressing ....');
 
-mindist=[] ;
-mindelay=[] ; 
-e = referenceEllipsoid('WGS84') ;
-
-if savespace=='Yes', mfile = matfile([MATfileFolder '\myFile.mat'],'Writable',true); end
-
-% for ipoint=1: HydroPoints
-% arclen2= distance(HydroLat(ipoint),HydroLon(ipoint), SMAPLatitude, SMAPLongitude,e) ;
-
-if savespace=='Yes'
-    mfile.arclen= 1000.*Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude'; SMAPLongitude']) ;
-    pippo=isnan(mfile.arclen); 
-else
-    arclen=1000.*Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude'; SMAPLongitude']) ;
-    pippo=isnan(arclen); 
-end
-
 figure(vvvvv) ; nexttile ; geoscatter(SMAPLatitude, SMAPLongitude, [5] , 100.*SMAPSoilMoisture, 'filled')
 colorbar ; 
 title(['Day ' char(extractBefore(string(SMAPTime(ii,1)),'T')) ])
-clear SMAPLatitude SMAPLongitude
+
+mindist=[] ;
+mindelay=[] ; 
+e = referenceEllipsoid('WGS84') ;
+arclen=1000.*Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude'; SMAPLongitude']) ;
+pippo=isnan(arclen); 
+%???????????? clear SMAPLatitude SMAPLongitude
 
 maxpippo=max(pippo(:)) ; 
 if max(pippo)==1,  pause(60), end 
 % mindist(ipoint)=min(arclen) ;
 clear pippo
 
-% arclen=arclen*1000 ; 
-% HydrotimeAll=repmat(datetime(HydroTime), 1,SMAPPoints) ;
-% clear HydroTime
+sizearclen=size(arclen) ; 
+[NearSpacerow, NearSpacecol] = find(arclen <= ThresholDist) ; 
+Idxspace= sub2ind(sizearclen,NearSpacerow,NearSpacecol) ; 
+arclen=arclen(Idxspace) ; 
+DelayPoints=hours(repmat(datetime(HydroTime), 1,SMAPPoints)-repmat(datetime(SMAPTime)', HydroPoints,1 )) ;
+% DelayPoints=hour(repmat(datetime(HydroTime(NearSpacerow)), 1,length(NearSpacerow)))-hour(repmat(datetime(SMAPTime(NearSpacecol))', length(NearSpacerow),1 )) ;
 
-% % if RefSatellite=="SMAP", SMAPtimeAll=repmat(datetime(extractBefore(SMAPTime, 'Z'))', HydroPoints,1 ) ;
-% % else SMAPtimeAll=repmat(datetime(SMAPTime)', HydroPoints,1 ) ;
-% % end
-% DelayPoints=repmat(datetime(SMAPTime)', HydroPoints,1 ) ;
-% clear SMAPTime
+%?????? clear HydroTime SMAPTime
 
-% DelayPoints=HydrotimeAll-DelayPoints ; 
+DelayPoints=DelayPoints(Idxspace) ; 
+Idxtime=find(abs(DelayPoints) <= ThresholdTimeDelay) ;
+arclen=arclen(Idxtime) ; DelayPoints=DelayPoints(Idxtime) ; 
+NearSpaceTime=Idxspace(Idxtime) ; 
+D=arclen ; T= DelayPoints ; 
+[NearSpaceTimerow,NearSpaceTimecol] = ind2sub(sizearclen,NearSpaceTime)  ;
 
-% DelayPoints=HydrotimeAll-repmat(datetime(SMAPTime)', HydroPoints,1 ) ;
-if savespace=='Yes'
-    mfile.DelayPoints=hours(repmat(datetime(HydroTime), 1,SMAPPoints)-repmat(datetime(SMAPTime)', HydroPoints,1 )) ;
-else
-    DelayPoints=hours(repmat(datetime(HydroTime), 1,SMAPPoints)-repmat(datetime(SMAPTime)', HydroPoints,1 )) ;
-end
-clear HydroTime SMAPTime
-
-% clear SMAPTime HydrotimeAll  ; 
-% datetime(repmat(HydroTime, 1,SMAPPoints))- repmat(datetime(extractBefore(SMAPTime, 'Z'))', HydroPoints,1 ) ;
-% mindelay(ipoint)=min(abs(hours(DelayPoints))) ; 
+[C, ia, ic]=unique(NearSpaceTimerow);
 empty=0 ; 
-for ipoint=1: HydroPoints
-    disp(['Colocate HydroGNSS point ' num2str(ipoint) ' of ' num2str(HydroPoints)]) 
-    if savespace=='Yes'
-    NearPoints=find(mfile.arclen(ipoint,:) < ThresholDist & abs(mfile.DelayPoints(ipoint,:)) <= ThresholdTimeDelay) ;
-    else
-    NearPoints=find(arclen(ipoint,:) < ThresholDist & abs(DelayPoints(ipoint,:)) <= ThresholdTimeDelay) ;
-    end
+for ipoint=1:length(C)
+disp(['Colocate HydroGNSS point ' num2str(ipoint) ' of ' num2str(length(C)) ' under threshold']) 
+NearPoints=NearSpaceTimecol(find(NearSpaceTimerow==C(ipoint))) ; 
 if isempty(NearPoints)==1 ;
-    SMAPSMtoplot(ii,ipoint)=NaN ; 
-    HydroSMtoplot(ii,ipoint)=NaN ;
-    HydroSMtoplotLat(ii,ipoint)=NaN ; 
-    HydroSMtoplotLon(ii,ipoint)=NaN ; 
-        % empty=empty+1 
-% DelayPoints=datetime(HydroTime(ipoint))- datetime(extractBefore(SMAPTime(NearPoints), 'Z')) ;
-% if  size(NearPoints) == 1 & abs(hours(DelayPoints)) <= ThresholdTimeDelay ;
-    elseif  size(NearPoints) == 1  ;
-    SMAPSMtoplot(ii,ipoint)=SMAPSoilMoisture(NearPoints) ; 
-    HydroSMtoplot(ii,ipoint)=HydroSoilMoisture(ipoint) ;
-    HydroSMtoplotLat(ii,ipoint)=HydroLat(ipoint) ; 
-    HydroSMtoplotLon(ii,ipoint)=HydroLon(ipoint); 
-    else
-    % ClosestTimeIndex=find(abs(DelayPoints)==min(abs(DelayPoints))) 
-    [a b]=size(NearPoints) ;
-        if savespace=='Yes'
-            mindist(ipoint)=min(mfile.arclen(ipoint,:)) ; 
-            % try
-            if b<=2
-            bestpoint=find(mfile.arclen(ipoint,NearPoints) < mindist(ipoint) + ThrSameDist & abs(mfile.DelayPoints(ipoint,NearPoints)) < min(abs(mfile.DelayPoints(ipoint,NearPoints)))+ThrSameTime) ; 
-            elseif b>2 & b<=4 
-            bestpoint=find([mfile.arclen(ipoint,NearPoints(1:2)) mfile.arclen(ipoint,NearPoints(3:end))] < mindist(ipoint) + ThrSameDist...
-                & [abs(mfile.DelayPoints(ipoint,NearPoints(1:2))) abs(mfile.DelayPoints(ipoint,NearPoints(3:end)))]...
-                < min([abs(mfile.DelayPoints(ipoint,NearPoints(1:2))) abs(mfile.DelayPoints(ipoint,NearPoints(3:end)))]+ThrSameTime)) ; 
-            elseif b>4 & b<=6 
-            bestpoint=find([mfile.arclen(ipoint,NearPoints(1:3)) mfile.arclen(ipoint,NearPoints(4:end))] < mindist(ipoint) + ThrSameDist...
-                & [abs(mfile.DelayPoints(ipoint,NearPoints(1:3))) abs(mfile.DelayPoints(ipoint,NearPoints(4:end)))]...
-                < min([abs(mfile.DelayPoints(ipoint,NearPoints(1:3))) abs(mfile.DelayPoints(ipoint,NearPoints(4:end)))]+ThrSameTime)) ; 
-            else 
-            disp(['NearPoints>6 at point ' num2str(ipoint)]) 
-            
-            end
-            % catch
-            % pause 
-            % end
-        else
-            mindist(ipoint)=min(arclen(ipoint,:)) ; 
-            bestpoint=find(arclen(ipoint,NearPoints) < mindist(ipoint) + ThrSameDist & abs(DelayPoints(ipoint,NearPoints)) < min(abs(DelayPoints(ipoint,NearPoints)))+ThrSameTime) ; 
-        end
+    SMAPSMtoplot(ii,C(ipoint))=NaN ; 
+    HydroSMtoplot(ii,C(ipoint))=NaN ;
+    HydroSMtoplotLat(ii,C(ipoint))=NaN ; 
+    HydroSMtoplotLon(ii,C(ipoint))=NaN ; 
+elseif  size(NearPoints) == 1  ;
+    SMAPSMtoplot(ii,C(ipoint))=SMAPSoilMoisture(NearPoints) ; 
+    HydroSMtoplot(ii,C(ipoint))=HydroSoilMoisture(C(ipoint)) ;
+    HydroSMtoplotLat(ii,C(ipoint))=HydroLat(C(ipoint)) ; 
+    HydroSMtoplotLon(ii,C(ipoint))=HydroLon(C(ipoint)); 
+elseif size(NearPoints)>1 
+    mindist=ThresholDist+1;  
+    for ii=1: size(NearPoints)
+        mindist=min(mindist, arclen(find(Idxspace(Idxtime)==sub2ind(sizearclen,C(ipoint),NearPoints(ii))))) ; 
+    end
+    bestpoint=[] ; 
+    for ii=1: size(NearPoints)
+        bestpoint=[bestpoint, arclen(find(Idxspace(Idxtime)==sub2ind(sizearclen,C(ipoint),NearPoints(ii))))] ;
+    end
         [a b]=size(bestpoint) ; 
         if b ==1 ;
-        SMAPSMtoplot(ii,ipoint)=SMAPSoilMoisture(NearPoints(bestpoint)) ; 
-        HydroSMtoplot(ii,ipoint)=HydroSoilMoisture(ipoint) ;
-        HydroSMtoplotLat(ii,ipoint)=HydroLat(ipoint) ; 
-        HydroSMtoplotLon(ii,ipoint)=HydroLon(ipoint); 
+        SMAPSMtoplot(ii,C(ipoint))=SMAPSoilMoisture(NearPoints(bestpoint)) ; 
+        HydroSMtoplot(ii,C(ipoint))=HydroSoilMoisture(C(ipoint)) ;
+        HydroSMtoplotLat(ii,C(ipoint))=HydroLat(C(ipoint)) ; 
+        HydroSMtoplotLon(ii,C(ipoint))=HydroLon(C(ipoint)); 
         elseif b > 1 ; 
-        SMAPSMtoplot(ii,ipoint)=mean(SMAPSoilMoisture(NearPoints(bestpoint))) ; 
-        HydroSMtoplot(ii,ipoint)=HydroSoilMoisture(ipoint) ;
-        HydroSMtoplotLat(ii,ipoint)=HydroLat(ipoint) ; 
-        HydroSMtoplotLon(ii,ipoint)=HydroLon(ipoint); 
+        SMAPSMtoplot(ii,C(ipoint))=mean(SMAPSoilMoisture(NearPoints(bestpoint))) ; 
+        HydroSMtoplot(ii,C(ipoint))=HydroSoilMoisture(C(ipoint)) ;
+        HydroSMtoplotLat(ii,C(ipoint))=HydroLat(C(ipoint)) ; 
+        HydroSMtoplotLon(ii,C(ipoint))=HydroLon(C(ipoint)); 
         else
         % empty=empty+1 
-        SMAPSMtoplot(ii,ipoint)=NaN ; 
-        HydroSMtoplot(ii,ipoint)=NaN ;
-        HydroSMtoplotLat(ii,ipoint)=NaN ; 
-        HydroSMtoplotLon(ii,ipoint)=NaN; 
+        SMAPSMtoplot(ii,C(ipoint))=NaN ; 
+        HydroSMtoplot(ii,C(ipoint))=NaN ;
+        HydroSMtoplotLat(ii,C(ipoint))=NaN ; 
+        HydroSMtoplotLon(ii,C(ipoint))=NaN; 
         disp([char(datetime('now','Format','yyyy-MM-dd HH:mm:ss')) ' WARNING: no selection of multiple nearest points. Program continuing']) ; 
-        
+        end
 
         fprintf(logfileID,[char(datetime('now','Format','yyyy-MM-dd HH:mm:ss')) ' WARNING: no selection of multiple nearest points. Program continuing']) ; 
         fprintf(logfileID,'\n') ;     
-        end
-
-    end
+end
 end %% end loop on number of HydroGNSS points
+% mindist=[] ;
+% mindelay=[] ; 
+% 
+% 
+% e = referenceEllipsoid('WGS84') ;
+% 
+% if savespace=='Yes', mfile = matfile([MATfileFolder '\myFile.mat'],'Writable',true); end
+% 
+% % for ipoint=1: HydroPoints
+% % arclen2= distance(HydroLat(ipoint),HydroLon(ipoint), SMAPLatitude, SMAPLongitude,e) ;
+% 
+% if savespace=='Yes'
+%     mfile.arclen= 1000.*Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude'; SMAPLongitude']) ;
+%     pippo=isnan(mfile.arclen); 
+% else
+%     arclen=1000.*Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude'; SMAPLongitude']) ;
+%     pippo=isnan(arclen); 
+% end
+% 
+% 
+% %% ??????????????  clear SMAPLatitude SMAPLongitude
+% 
+% maxpippo=max(pippo(:)) ; 
+% if max(pippo)==1,  pause(60), end 
+% % mindist(ipoint)=min(arclen) ;
+% clear pippo
+% 
+% % arclen=arclen*1000 ; 
+% % HydrotimeAll=repmat(datetime(HydroTime), 1,SMAPPoints) ;
+% % clear HydroTime
+% 
+% % % if RefSatellite=="SMAP", SMAPtimeAll=repmat(datetime(extractBefore(SMAPTime, 'Z'))', HydroPoints,1 ) ;
+% % % else SMAPtimeAll=repmat(datetime(SMAPTime)', HydroPoints,1 ) ;
+% % % end
+% % DelayPoints=repmat(datetime(SMAPTime)', HydroPoints,1 ) ;
+% % clear SMAPTime
+% 
+% % DelayPoints=HydrotimeAll-DelayPoints ; 
+% 
+% % DelayPoints=HydrotimeAll-repmat(datetime(SMAPTime)', HydroPoints,1 ) ;
+% if savespace=='Yes'
+%     mfile.DelayPoints=hours(repmat(datetime(HydroTime), 1,SMAPPoints)-repmat(datetime(SMAPTime)', HydroPoints,1 )) ;
+% else
+%     DelayPoints=hours(repmat(datetime(HydroTime), 1,SMAPPoints)-repmat(datetime(SMAPTime)', HydroPoints,1 )) ;
+% end
+% clear HydroTime SMAPTime
+% 
+% % clear SMAPTime HydrotimeAll  ; 
+% % datetime(repmat(HydroTime, 1,SMAPPoints))- repmat(datetime(extractBefore(SMAPTime, 'Z'))', HydroPoints,1 ) ;
+% % mindelay(ipoint)=min(abs(hours(DelayPoints))) ; 
+% empty=0 ; 
+% for ipoint=1: HydroPoints
+%     disp(['Colocate HydroGNSS point ' num2str(ipoint) ' of ' num2str(HydroPoints)]) 
+%     if savespace=='Yes'
+%     NearPoints=find(mfile.arclen(ipoint,:) < ThresholDist & abs(mfile.DelayPoints(ipoint,:)) <= ThresholdTimeDelay) ;
+%     else
+%     NearPoints=find(arclen(ipoint,:) < ThresholDist & abs(DelayPoints(ipoint,:)) <= ThresholdTimeDelay) ;
+%     end
+% if isempty(NearPoints)==1 ;
+%     SMAPSMtoplot(ii,ipoint)=NaN ; 
+%     HydroSMtoplot(ii,ipoint)=NaN ;
+%     HydroSMtoplotLat(ii,ipoint)=NaN ; 
+%     HydroSMtoplotLon(ii,ipoint)=NaN ; 
+%         % empty=empty+1 
+% % DelayPoints=datetime(HydroTime(ipoint))- datetime(extractBefore(SMAPTime(NearPoints), 'Z')) ;
+% % if  size(NearPoints) == 1 & abs(hours(DelayPoints)) <= ThresholdTimeDelay ;
+%     elseif  size(NearPoints) == 1  ;
+%     SMAPSMtoplot(ii,ipoint)=SMAPSoilMoisture(NearPoints) ; 
+%     HydroSMtoplot(ii,ipoint)=HydroSoilMoisture(ipoint) ;
+%     HydroSMtoplotLat(ii,ipoint)=HydroLat(ipoint) ; 
+%     HydroSMtoplotLon(ii,ipoint)=HydroLon(ipoint); 
+%     else
+%     % ClosestTimeIndex=find(abs(DelayPoints)==min(abs(DelayPoints))) 
+%     [a b]=size(NearPoints) ;
+%         if savespace=='Yes'
+%             mindist(ipoint)=min(mfile.arclen(ipoint,:)) ; 
+%             % try
+%             if b<=2
+%             bestpoint=find(mfile.arclen(ipoint,NearPoints) < mindist(ipoint) + ThrSameDist & abs(mfile.DelayPoints(ipoint,NearPoints)) < min(abs(mfile.DelayPoints(ipoint,NearPoints)))+ThrSameTime) ; 
+%             elseif b>2 & b<=4 
+%             bestpoint=find([mfile.arclen(ipoint,NearPoints(1:2)) mfile.arclen(ipoint,NearPoints(3:end))] < mindist(ipoint) + ThrSameDist...
+%                 & [abs(mfile.DelayPoints(ipoint,NearPoints(1:2))) abs(mfile.DelayPoints(ipoint,NearPoints(3:end)))]...
+%                 < min([abs(mfile.DelayPoints(ipoint,NearPoints(1:2))) abs(mfile.DelayPoints(ipoint,NearPoints(3:end)))]+ThrSameTime)) ; 
+%             elseif b>4 & b<=6 
+%             bestpoint=find([mfile.arclen(ipoint,NearPoints(1:3)) mfile.arclen(ipoint,NearPoints(4:end))] < mindist(ipoint) + ThrSameDist...
+%                 & [abs(mfile.DelayPoints(ipoint,NearPoints(1:3))) abs(mfile.DelayPoints(ipoint,NearPoints(4:end)))]...
+%                 < min([abs(mfile.DelayPoints(ipoint,NearPoints(1:3))) abs(mfile.DelayPoints(ipoint,NearPoints(4:end)))]+ThrSameTime)) ; 
+%             else 
+%             disp(['NearPoints>6 at point ' num2str(ipoint)]) 
+%             
+%             end
+%             % catch
+%             % pause 
+%             % end
+%         else
+%             mindist(ipoint)=min(arclen(ipoint,:)) ; 
+%             bestpoint=find(arclen(ipoint,NearPoints) < mindist(ipoint) + ThrSameDist & abs(DelayPoints(ipoint,NearPoints)) < min(abs(DelayPoints(ipoint,NearPoints)))+ThrSameTime) ; 
+%         end
+%         [a b]=size(bestpoint) ; 
+%         if b ==1 ;
+%         SMAPSMtoplot(ii,ipoint)=SMAPSoilMoisture(NearPoints(bestpoint)) ; 
+%         HydroSMtoplot(ii,ipoint)=HydroSoilMoisture(ipoint) ;
+%         HydroSMtoplotLat(ii,ipoint)=HydroLat(ipoint) ; 
+%         HydroSMtoplotLon(ii,ipoint)=HydroLon(ipoint); 
+%         elseif b > 1 ; 
+%         SMAPSMtoplot(ii,ipoint)=mean(SMAPSoilMoisture(NearPoints(bestpoint))) ; 
+%         HydroSMtoplot(ii,ipoint)=HydroSoilMoisture(ipoint) ;
+%         HydroSMtoplotLat(ii,ipoint)=HydroLat(ipoint) ; 
+%         HydroSMtoplotLon(ii,ipoint)=HydroLon(ipoint); 
+%         else
+%         % empty=empty+1 
+%         SMAPSMtoplot(ii,ipoint)=NaN ; 
+%         HydroSMtoplot(ii,ipoint)=NaN ;
+%         HydroSMtoplotLat(ii,ipoint)=NaN ; 
+%         HydroSMtoplotLon(ii,ipoint)=NaN; 
+%         disp([char(datetime('now','Format','yyyy-MM-dd HH:mm:ss')) ' WARNING: no selection of multiple nearest points. Program continuing']) ; 
+%         
+% 
+%         fprintf(logfileID,[char(datetime('now','Format','yyyy-MM-dd HH:mm:ss')) ' WARNING: no selection of multiple nearest points. Program continuing']) ; 
+%         fprintf(logfileID,'\n') ;     
+%         end
+% 
+%     end
+% end %% end loop on number of HydroGNSS points
 
 PercNoColocation(ii)=100*size(find(isnan(HydroSMtoplot(ii,1:HydroPoints))==1),2)/HydroPoints ; % Percentage of HydroGNNS L2 product without SMAP colocation
 PercNoSaturations(ii)=100*size(find(HydroSMtoplot(ii,1:HydroPoints)==0 | HydroSMtoplot(ii,1:HydroPoints)==50),2)/HydroPoints ; % Percentage of HydroGNNS L2 product without SMAP colocation
 
-end
+end  % endd look on number of days
 
 vvvv=figure('Units', 'centimeters', 'Position', [0 0 21 29.7]) ;
 hold on
