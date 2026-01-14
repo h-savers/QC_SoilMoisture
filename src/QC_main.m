@@ -151,7 +151,7 @@ end  % % end loop on the days
  elseif RefSatellite=="SMOS"
 % Identify SMOS product folders in the PDGS for day OK
  [dayOKSMOS, dayOKwithSMOS, SMOSfolderOK, SMOSfileOK_SD, SMOSfileOK_SA] = IdentifySMOSfolder(L2OPdataOK, timeproduct_sixtotOK, DynamicAuxiliarySMOSRootPath) ; 
-
+SMAPSMtoplot
 %% read SMOS data
  SMAP = ReadSMOS(dayOKwithSMOS, SMOSfileOK_SD, SMOSfileOK_SA, SMOSfolderOK, pixelSMOS, lineSMOS); 
  dayOKwithSMAP=dayOKwithSMOS ; 
@@ -266,25 +266,39 @@ title(['Day ' char(extractBefore(string(SMAPTime(ii,1)),'T')) ])
 mindist=[] ;
 mindelay=[] ; 
 e = referenceEllipsoid('WGS84') ;
+if savespace=='Yes', mfile = matfile([MATfileFolder '\myFile.mat'],'Writable',true); end
+
+if savespace=='Yes'
+myfile.arclen=1000.*Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude'; SMAPLongitude']) ;    
+sizearclen=size(myfile.arclen) ; 
+[NearSpacerow, NearSpacecol] = find(myfile.arclen <= ThresholDist) ;
+Idxspace= sub2ind(sizearclen,NearSpacerow,NearSpacecol) ; 
+arclen=myfile.arclen(Idxspace) ; 
+myfile.DelayPoints=hours(repmat(datetime(HydroTime), 1,SMAPPoints)) ; 
+myfile.DelayPoints=myfile.DelayPoints-hours(repmat(datetime(SMAPTime)', HydroPoints,1 )) ;
+DelayPoints=myfile.DelayPoints(Idxspace) ; 
+else
 arclen=1000.*Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude'; SMAPLongitude']) ;
-pippo=isnan(arclen); 
-%???????????? clear SMAPLatitude SMAPLongitude
-
-maxpippo=max(pippo(:)) ; 
-if max(pippo)==1,  pause(60), end 
-% mindist(ipoint)=min(arclen) ;
-clear pippo
-
 sizearclen=size(arclen) ; 
-[NearSpacerow, NearSpacecol] = find(arclen <= ThresholDist) ; 
+[NearSpacerow, NearSpacecol] = find(arclen <= ThresholDist) ;
 Idxspace= sub2ind(sizearclen,NearSpacerow,NearSpacecol) ; 
 arclen=arclen(Idxspace) ; 
-DelayPoints=hours(repmat(datetime(HydroTime), 1,SMAPPoints)-repmat(datetime(SMAPTime)', HydroPoints,1 )) ;
+DelayPoints=hours(repmat(datetime(HydroTime), 1,SMAPPoints)) ; 
+DelayPoints=DelayPoints-hours(repmat(datetime(SMAPTime)', HydroPoints,1 )) ;
+DelayPoints=DelayPoints(Idxspace) ; 
+end
+% pippo=isnan(arclen); 
+clear SMAPLatitude SMAPLongitude
+clear HydroTime SMAPTime
+% maxpippo=max(pippo(:)) ; 
+% if max(pippo)==1,  pause(60), end 
+% % mindist(ipoint)=min(arclen) ;
+% clear pippo
+%
+
+%DelayPoints=hours(repmat(datetime(HydroTime), 1,SMAPPoints)-repmat(datetime(SMAPTime)', HydroPoints,1 )) ;
 % DelayPoints=hour(repmat(datetime(HydroTime(NearSpacerow)), 1,length(NearSpacerow)))-hour(repmat(datetime(SMAPTime(NearSpacecol))', length(NearSpacerow),1 )) ;
 
-%?????? clear HydroTime SMAPTime
-
-DelayPoints=DelayPoints(Idxspace) ; 
 Idxtime=find(abs(DelayPoints) <= ThresholdTimeDelay) ;
 arclen=arclen(Idxtime) ; DelayPoints=DelayPoints(Idxtime) ; 
 NearSpaceTime=Idxspace(Idxtime) ; 
