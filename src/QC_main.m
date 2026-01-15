@@ -274,9 +274,9 @@ sizearclen=size(myfile.arclen) ;
 [NearSpacerow, NearSpacecol] = find(myfile.arclen <= ThresholDist) ;
 Idxspace= sub2ind(sizearclen,NearSpacerow,NearSpacecol) ; 
 arclen=myfile.arclen(Idxspace) ; 
-myfile.DelayPoints=repmat(datetime(HydroTime), 1,SMAPPoints) ; 
-myfile.DelayPoints=hours(myfile.DelayPoints-repmat(datetime(SMAPTime)', HydroPoints,1 )) ;
-DelayPoints=myfile.DelayPoints(Idxspace) ; 
+myfile.DelayPoints=hours(repmat(datetime(HydroTime(NearSpacerow)), 1,length(NearSpacerow))-repmat(datetime(SMAPTime(NearSpacecol))', length(NearSpacerow),1 )) ;
+IdxDelay= sub2ind(size(DelayPoints),[1:1:length(NearSpacerow)]',[1:1:length(NearSpacerow)]') ;
+DelayPoints=myfile.DelayPoints(IdxDelay) ;
 else
 arclen=1000.*Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude'; SMAPLongitude']) ;
 sizearclen=size(arclen) ; 
@@ -289,7 +289,6 @@ arclen=arclen(Idxspace) ;
 DelayPoints=hours(repmat(datetime(HydroTime(NearSpacerow)), 1,length(NearSpacerow))-repmat(datetime(SMAPTime(NearSpacecol))', length(NearSpacerow),1 )) ;
 IdxDelay= sub2ind(size(DelayPoints),[1:1:length(NearSpacerow)]',[1:1:length(NearSpacerow)]') ;
 DelayPoints=DelayPoints(IdxDelay) ;
-
 end
 % pippo=isnan(arclen); 
 clear SMAPLatitude SMAPLongitude
@@ -344,7 +343,7 @@ elseif length(NearPoints)>1
         HydroSMtoplotLat(ii,C(ipoint))=HydroLat(C(ipoint)) ; 
         HydroSMtoplotLon(ii,C(ipoint))=HydroLon(C(ipoint)); 
         else
-        % empty=empty+1 
+        % empty=empty+1 n
         SMAPSMtoplot(ii,C(ipoint))=NaN ; 
         HydroSMtoplot(ii,C(ipoint))=NaN ;
         HydroSMtoplotLat(ii,C(ipoint))=NaN ; 
@@ -356,20 +355,20 @@ elseif length(NearPoints)>1
 end
 end %% end loop on number of HydroGNSS points
 %
+NumberColocation(ii)=length(find(isnan(HydroSMtoplot(ii,1:HydroPoints))==0)) ;
 PercNoColocation(ii)=100*size(find(isnan(HydroSMtoplot(ii,1:HydroPoints))==1),2)/HydroPoints ; % Percentage of HydroGNNS L2 product without SMAP colocation
 PercNoSaturations(ii)=100*size(find(HydroSMtoplot(ii,1:HydroPoints)==0 | HydroSMtoplot(ii,1:HydroPoints)==50),2)/HydroPoints ; % Percentage of HydroGNNS L2 product without SMAP colocation
 %
 end  % end look on number of days
 
+%%% computation and plot of figure with map of errors
 vvvv=figure('Units', 'centimeters', 'Position', [0 0 21 29.7]) ;
 hold on
 ax1 = axes('Position',[0 0 1 1]); ax1.TickDir='out' ; 
 ax2 = axes('Position',[0.1 0.25 0.8 0.5]); 
-
 for ii=dayOKwithSMAP'
 error= SMAPSMtoplot(ii,1:HydroGNSSnumber(ii))- HydroSMtoplot(ii,1:HydroGNSSnumber(ii)) ; 
 noerrornan=find(isnan(error)==0) ; 
-
 error=error(noerrornan) ; 
 BIAS(ii)=mean(error) ; 
 UbRMSE(ii)=std(error) ;
@@ -381,12 +380,12 @@ pluto=SMAPSMtoplot(ii,1:HydroGNSSnumber(ii)) ;
 R=corrcoef(pippo(noerrornan), pluto(noerrornan)) ; 
 corrcoe(ii)=R(1,2) ; 
 corrcoe2(ii)=mean((pippo(noerrornan)-mean(pippo(noerrornan))).*(pluto(noerrornan)-mean(pluto(noerrornan))))./std(pluto(noerrornan))/std(pippo(noerrornan)) ;
-
 geoscatter(HydroSMtoplotLat(ii,noerrornan),HydroSMtoplotLon(ii,noerrornan), 50, error, 'filled')
 ax2=gca ; 
 end
 colorbar('southoutside')
 title('Map of SSM errors (Reference minus HydroGNSS) [%]')
+%%% end of computation and plot of figure with map of errors
 
 for ii=dayOKwithSMAP'
  
@@ -411,6 +410,7 @@ legendtxt(ii)=pippo ;
 end
 % tiledlayout(2,1) ;
 
+%% figures with maps of Soil moisture from HydroGNSS and histograms of flags
 for ii=dayOKwithSMAP' 
 figure(vv) ; nexttile ;
 bar(Flag(ii,:)) ; 
@@ -418,34 +418,52 @@ xticks([1:2:32]);
 title(['L2 Flags on ' char(DateOK(ii))])
 xlabel('Flag 32 bits')
 end
+%%% end of figures with maps of Soil moisture from HydroGNSS and histograms of flags
 
+%%% figure with overall scatterplot of HydroGNSS vs reference
+% vvv=figure('Units', 'centimeters', 'Position', [0 0 21 29.7]) ;
 vvv=figure('Units', 'centimeters', 'Position', [0 0 21 29.7]) ;
-ax1 = axes('Position',[0 0 1 1]); ax1.TickDir='out' ; 
-
-ax2 = axes('Position',[0.2 0.15 0.7 0.6]); 
+vvv=figure ; 
+tt=tiledlayout(2,2) ; 
+title(tt, ['Entire time period comparison with ' char(RefSatellite) ' reference'])
+nexttile([1 2])
+%  ax1 = axes('Position',[0 0 1 1]); ax1.TickDir='out' ; 
+%  ax2 = axes('Position',[0.2 0.15 0.7 0.6]); 
 for ii=dayOKwithSMAP'
 plot(100.*SMAPSMtoplot(ii,1:HydroGNSSnumber(ii)), HydroSMtoplot(ii,1:HydroGNSSnumber(ii)), '.') ; 
 hold on 
-% legend([legendtxt(1) legendtxt(2) legendtxt(3)],"AutoUpdate","on")
-
 end
-
 xlim([-5 55]) ;
 ylim([-5 55]) ;
 title(['HydrGNSS vs ' char(RefSatellite) ' reference SSM'])
 ylabel(['HydroGNSS ' char(ProductLevel) ' Soil Moisture [%]'])
 xlabel([char(RefSatellite) ' L3 Soil Moisture [%]'])
-legend(legendtxt',"AutoUpdate","on", 'Location', 'southoutside', 'FontSize', 12)
+legend(legendtxt',"AutoUpdate","on", 'Location', 'eastoutside', 'FontSize', 12)
 
 
+figure(vvv), nexttile([ 3])
+% ax1 = axes('Position',[0 0 1 1]); ax1.TickDir='out' ; 
+% ax2 = axes('Position',[0 0 0.3 0.3]); 
+plot(dayOKwithSMAP, RMSE, 'o')
+xlabel('Day of colocation count') ; ylabel('Soil Moisture RMSE [%]')
+xlim([dayOKwithSMAP(1)-1, dayOKwithSMAP(end)+1]) ;
+ylim([round(min(RMSE), 0)-1, round(max(RMSE), 0)+1] );
+
+figure(vvv), nexttile([4])
+% ax1 = axes('Position',[0 0 1 1]); ax1.TickDir='out' ; 
+% ax2 = axes('Position',[0 0 0.3 0.3]); 
+plot(dayOKwithSMAP, corrcoe, 'o')
+xlabel('Day of colocation count') ; ylabel('Soil Moisture correlation coefficient [%]')
+xlim([dayOKwithSMAP(1)-1, dayOKwithSMAP(end)+1]) ;
+ylim([0, 1] );
+
+%%% end of figure with overall scatterplot of HydroGNSS vs reference
+
+%%% figure with overall text report of performances
 v=figure('Units', 'centimeters', 'Position', [0 0 21 29.7]) ;
-
-% ax1 = axes('Position',[0.2 0.2 0.6 0.3*29.7/21]);
-% ax1 = axes('Position',[0.2 0.05 0.6 0.3*29.7/21]); 
 ax1 = axes('Position',[1.1 0. 0.1 0.1]); 
 xlim([0 10]) ;
 ylim([0 10]) ;
-
 vert=98 ;
 indent=-100 ;
 sizefontLarge=15 ;
@@ -453,10 +471,11 @@ sizefontSmall=12 ;
 text(indent,vert, ['\fontsize{12} SSM QC report on ' char(datetime)] ) ; 
 vert=vert-3 ; 
 text(indent,vert, ['\fontsize{10} Reference:' char(RefSatellite) '. Time period: ' init_SM_Day ' to ' final_SM_Day] )
-
 for ii=dayOKwithSMAP'
 vert=vert-4 ; 
-text(indent,vert, ['\fontsize{10} Day ' char(string(ii)) ':    Root Mean Square Error= ' char(string(round(RMSE(ii),2))) ' %'] ) 
+text(indent,vert, ['\fontsize{10} Day ' char(string(ii)) ':    Number of colocations= ' char(string(NumberColocation(ii)))] ) 
+vert=vert-2 ; 
+text(indent+6.4,vert, ['\fontsize{10} Root Mean Square Error= ' char(string(round(RMSE(ii),2))) ' %'] ) 
 vert=vert-2 ; 
 text(indent+6.4,vert, ['\fontsize{10} Unbiased Root Mean Square Error= ' char(string(round(UbRMSE(ii),2))) ' %'] ) 
 vert=vert-2 ; 
@@ -473,8 +492,8 @@ vert=vert-2 ;
 text(indent+7,vert,['\fontsize{10} ' report4(ii)])
 vert=vert-2 ; 
 text(indent+7,vert,['\fontsize{10} ' report9(ii)])
-
 end
+%%% figure with overall text report of perfromances
 
 reportfile=[char(ReportFolder) '\HydroGNSSQCreport_' char(datetime('now','Format','yy-MM-dd_HH-mm')) '.pdf'] ;
 
@@ -485,6 +504,7 @@ str11= ['First day: ' char(init_SM_Day) '. Final day: ' char(final_SM_Day)] ;
 C = {Title, str1, str11} ;
 for ii=dayOKwithSMAP'
 str0=['Day ' char(string(ii)) ': '   char(DateOK(ii))] ; 
+str1 = ['        Number of colocations: ', char(string(NumberColocation(ii)))] ;
 str2 = ['        Percentage of SP with retrievals: ', char(string(round(PercSMretrieve(ii),2))) ' %'] ;
 str3 = ['        Percentage of HydroGNNS product without reference colocation: ',  char(string(round(PercNoColocation(ii),2))) ' %'] ;
 str4 = ['        Percentage of saturated (i.e., 0/50%) HydroGNNS L2 Soil Moisture: ',  char(string(round(PercNoSaturations(ii),2))) ' %'] ;
@@ -493,13 +513,9 @@ str5=['        Root mean square error:                  RMSE=' char(string(round
 str6=['        Unbiased root mean square error:   UbRMSE=' char(string(round(UbRMSE(ii),2))), ' m^3/m^3' ] ; 
 str7=['        Bias:                                                 B=' char(string(round(BIAS(ii),2))), ' m^3/m^3' ] ; 
 str8=['        Correlation coefficient:                     R=' char(string(round(corrcoe(ii),2)))] ;
-C = [C {str0, str2 , str3, str4, str9, str5, str6, str7, str8}] ; 
+C = [C {str0, str1, str2 , str3, str4, str9, str5, str6, str7, str8}] ; 
 end
 ok = text2pdf(reportfile,C,0) ; 
-
- % exportgraphics(v,reportfile) ;
-%exportgraphics(v,reportfile, 'Append', true) ;
-% exportgraphics(vv,reportfile, 'Append', true, 'Padding', figure) ;
 exportgraphics(vv,reportfile, 'Append', true) ;
 exportgraphics(vvv,reportfile, 'Append', true) ;
 exportgraphics(vvvv,reportfile, 'Append', true) ;
