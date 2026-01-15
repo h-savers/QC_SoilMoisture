@@ -274,8 +274,8 @@ sizearclen=size(myfile.arclen) ;
 [NearSpacerow, NearSpacecol] = find(myfile.arclen <= ThresholDist) ;
 Idxspace= sub2ind(sizearclen,NearSpacerow,NearSpacecol) ; 
 arclen=myfile.arclen(Idxspace) ; 
-myfile.DelayPoints=hours(repmat(datetime(HydroTime), 1,SMAPPoints)) ; 
-myfile.DelayPoints=myfile.DelayPoints-hours(repmat(datetime(SMAPTime)', HydroPoints,1 )) ;
+myfile.DelayPoints=repmat(datetime(HydroTime), 1,SMAPPoints) ; 
+myfile.DelayPoints=hours(myfile.DelayPoints-repmat(datetime(SMAPTime)', HydroPoints,1 )) ;
 DelayPoints=myfile.DelayPoints(Idxspace) ; 
 else
 arclen=1000.*Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude'; SMAPLongitude']) ;
@@ -283,9 +283,13 @@ sizearclen=size(arclen) ;
 [NearSpacerow, NearSpacecol] = find(arclen <= ThresholDist) ;
 Idxspace= sub2ind(sizearclen,NearSpacerow,NearSpacecol) ; 
 arclen=arclen(Idxspace) ; 
-DelayPoints=hours(repmat(datetime(HydroTime), 1,SMAPPoints)) ; 
-DelayPoints=DelayPoints-hours(repmat(datetime(SMAPTime)', HydroPoints,1 )) ;
-DelayPoints=DelayPoints(Idxspace) ; 
+% DelayPoints=repmat(datetime(HydroTime), 1,SMAPPoints) ; 
+% DelayPoints=hours(DelayPoints-repmat(datetime(SMAPTime)', HydroPoints,1 )) ;
+% DelayPoints=DelayPoints(Idxspace) ; 
+DelayPoints=hours(repmat(datetime(HydroTime(NearSpacerow)), 1,length(NearSpacerow))-repmat(datetime(SMAPTime(NearSpacecol))', length(NearSpacerow),1 )) ;
+IdxDelay= sub2ind(size(DelayPoints),[1:1:length(NearSpacerow)]',[1:1:length(NearSpacerow)]') ;
+DelayPoints=DelayPoints(IdxDelay) ;
+
 end
 % pippo=isnan(arclen); 
 clear SMAPLatitude SMAPLongitude
@@ -295,10 +299,6 @@ clear HydroTime SMAPTime
 % % mindist(ipoint)=min(arclen) ;
 % clear pippo
 %
-
-%DelayPoints=hours(repmat(datetime(HydroTime), 1,SMAPPoints)-repmat(datetime(SMAPTime)', HydroPoints,1 )) ;
-% DelayPoints=hour(repmat(datetime(HydroTime(NearSpacerow)), 1,length(NearSpacerow)))-hour(repmat(datetime(SMAPTime(NearSpacecol))', length(NearSpacerow),1 )) ;
-
 Idxtime=find(abs(DelayPoints) <= ThresholdTimeDelay) ;
 arclen=arclen(Idxtime) ; DelayPoints=DelayPoints(Idxtime) ; 
 NearSpaceTime=Idxspace(Idxtime) ; 
@@ -419,21 +419,6 @@ title(['L2 Flags on ' char(DateOK(ii))])
 xlabel('Flag 32 bits')
 end
 
-% figure(vv) ; nexttile ; 
-% for ii=dayOKwithSMAP'
-% 
-% plot(100.*SMAPSMtoplot(ii,1:HydroGNSSnumber(ii)), HydroSMtoplot(ii,1:HydroGNSSnumber(ii)), '.') ; 
-% hold on 
-% % legend([legendtxt(1) legendtxt(2) legendtxt(3)],"AutoUpdate","on")
-% 
-% end
-% legend(legendtxt',"AutoUpdate","on", 'Location', 'southoutside')
-% xlim([-5 55]) ;
-% ylim([-5 55]) ;
-% title('HydrGNSS vs SMAP')
-% ylabel(['HydroGNSS ' char(ProductLevel) ' SSM [%]'])
-% xlabel('SMAP L3 SSM [%]')
-%
 vvv=figure('Units', 'centimeters', 'Position', [0 0 21 29.7]) ;
 ax1 = axes('Position',[0 0 1 1]); ax1.TickDir='out' ; 
 
