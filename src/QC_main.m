@@ -151,7 +151,7 @@ end  % % end loop on the days
  elseif RefSatellite=="SMOS"
 % Identify SMOS product folders in the PDGS for day OK
  [dayOKSMOS, dayOKwithSMOS, SMOSfolderOK, SMOSfileOK_SD, SMOSfileOK_SA] = IdentifySMOSfolder(L2OPdataOK, timeproduct_sixtotOK, DynamicAuxiliarySMOSRootPath) ; 
-SMAPSMtoplot
+
 %% read SMOS data
  SMAP = ReadSMOS(dayOKwithSMOS, SMOSfileOK_SD, SMOSfileOK_SA, SMOSfolderOK, pixelSMOS, lineSMOS); 
  dayOKwithSMAP=dayOKwithSMOS ; 
@@ -235,8 +235,11 @@ HydroLon=HydroLon(Hydrononan)  ;
 
 SMAPTime(contains(SMAPTime, "N/A")==1)="NaT" ;  % needed as the first element of SMAP UTC time in SMAP 09 km is "N/A" 
 % SMAPnonan=find(SMAPSoilMoisture ~= -9999 & isnan(SMAPSoilMoisture)==0) ;
-SMAPnonan=find(SMAPSoilMoisture ~= -9999 & isnan(SMAPSoilMoisture)==0 & datetime(SMAPTime, 'InputFormat', 'yyyy-MM-dd''T''HH:mm:ss.SSS') > min(datetime(HydroTime))- ThresholdTimeDelay/24 ...
-    & datetime(SMAPTime, 'InputFormat', 'yyyy-MM-dd''T''HH:mm:ss.SSS') < max(datetime(HydroTime))+ ThresholdTimeDelay/24) ;
+% SMAPnonan=find(SMAPSoilMoisture ~= -9999 & isnan(SMAPSoilMoisture)==0 & datetime(SMAPTime, 'InputFormat', 'yyyy-MM-dd''T''HH:mm:ss.SSS') > min(datetime(HydroTime))- ThresholdTimeDelay/24 ...
+%     & datetime(SMAPTime, 'InputFormat', 'yyyy-MM-dd''T''HH:mm:ss.SSS') < max(datetime(HydroTime))+ ThresholdTimeDelay/24) ;
+
+SMAPnonan=find(SMAPSoilMoisture ~= -9999 & isnan(SMAPSoilMoisture)==0 & datetime(SMAPTime) > min(datetime(HydroTime))- ThresholdTimeDelay/24 ...
+    & datetime(SMAPTime) < max(datetime(HydroTime))+ ThresholdTimeDelay/24) ;
 
 SMAPSoilMoisture=SMAPSoilMoisture(SMAPnonan) ; 
 SMAPTime=SMAPTime(SMAPnonan) ; 
@@ -261,8 +264,11 @@ disp([char(datetime('now','Format','yyyy-MM-dd HH:mm:ss')) ' INFO: selection of 
 
 figure(vvvvv) ; nexttile ; geoscatter(SMAPLatitude, SMAPLongitude, [5] , 100.*SMAPSoilMoisture, 'filled')
 colorbar ; 
-title(['Day ' char(extractBefore(string(SMAPTime(ii,1)),'T')) ])
-
+if RefSatellite=="SMOS"
+    title(['Day ' char(extractBefore(string(SMAPTime(ii,1)),' ')) ])
+else
+    title(['Day ' char(extractBefore(string(SMAPTime(ii,1)),'T')) ])
+end
 mindist=[] ;
 mindelay=[] ; 
 e = referenceEllipsoid('WGS84') ;
@@ -423,7 +429,6 @@ end
 %%% figure with overall scatterplot of HydroGNSS vs reference
 % vvv=figure('Units', 'centimeters', 'Position', [0 0 21 29.7]) ;
 vvv=figure('Units', 'centimeters', 'Position', [0 0 21 29.7]) ;
-vvv=figure ; 
 tt=tiledlayout(2,2) ; 
 title(tt, ['Entire time period comparison with ' char(RefSatellite) ' reference'])
 nexttile([1 2])
