@@ -25,7 +25,7 @@ end
 %
 [RefSatellite, ProductLevel, ProcessingSatellite, savespace, MATfileFolder, DataInputRootPath, DynamicAuxiliarySMOSRootPath,...
     DynamicAuxiliarySMAPRootPath, DynamicAuxiliarySMAP09RootPath, LogsOutputRootPath, ThresholDist, ThresholdTimeDelay,...
-    ThrSameDist, ThrSameTime, Threshold09Dist, Thr09SameDist, ReportFolder] = ReadConfFile(configurationPath);
+    ThrSameDist, ThrSameTime, Threshold09Dist, Thr09SameDist, ReportFolder, SMAPQC] = ReadConfFile(configurationPath);
 
 %%%%%%%  End Read configuration file
 %
@@ -188,7 +188,10 @@ SMAPLatitude=[SMAP(ii,1).latitude_AM(:); SMAP(ii,2).latitude_AM(:); SMAP(ii,3).l
     SMAP(ii,1).latitude_PM(:); SMAP(ii,2).latitude_PM(:); SMAP(ii,3).latitude_PM(:)] ;
 SMAPLongitude=[SMAP(ii,1).longitude_AM(:); SMAP(ii,2).longitude_AM(:); SMAP(ii,3).longitude_AM(:);...
     SMAP(ii,1).longitude_PM(:); SMAP(ii,2).longitude_PM(:); SMAP(ii,3).longitude_PM(:)] ;
-% clear SMAP
+SMAPretrieval_qual_flag=[SMAP(ii,1).retrieval_qual_flag_AM_REF(:); SMAP(ii,2).retrieval_qual_flag_AM_REF(:); SMAP(ii,3).retrieval_qual_flag_AM_REF(:) ;...
+    SMAP(ii,1).retrieval_qual_flag_PM_REF(:); SMAP(ii,2).retrieval_qual_flag_PM_REF(:); SMAP(ii,3).retrieval_qual_flag_PM_REF(:) ] ;
+
+clear SMAP
 
 HydroSoilMoisture=[L2OPdataOK(ii,1).SoilMoisture(:); L2OPdataOK(ii,2).SoilMoisture(:);L2OPdataOK(ii,3).SoilMoisture(:);L2OPdataOK(ii,4).SoilMoisture(:)] ;
 HydroTime=[L2OPdataOK(ii,1).ObservationUTCMidPointTime(:); L2OPdataOK(ii,2).ObservationUTCMidPointTime(:);L2OPdataOK(ii,3).ObservationUTCMidPointTime(:);L2OPdataOK(ii,4).ObservationUTCMidPointTime(:)] ;
@@ -202,6 +205,7 @@ SMAPSoilMoisture=[SMAP(ii,2).SoilMoisture_AM_REF(:); SMAP(ii,2).SoilMoisture_PM_
 SMAPTime=[SMAP(ii,2).tb_time_AM_REF(:) ; SMAP(ii,2).tb_time_PM_REF(:)] ;
 SMAPLatitude=[SMAP(ii,2).latitude_AM(:); SMAP(ii,2).latitude_PM(:)] ;
 SMAPLongitude=[SMAP(ii,2).longitude_AM(:); SMAP(ii,2).longitude_PM(:)] ;
+SMAPretrieval_qual_flag=[SMAP(ii,2).retrieval_qual_flag_AM_REF(:); SMAP(ii,2).retrieval_qual_flag_PM_REF(:)]; 
 
 HydroSoilMoisture=L2OPdataOK(ii,1).SoilMoisture(:) ;
 HydroTime=L2OPdataOK(ii,1).ObservationUTCMidPointTime(:) ;
@@ -241,12 +245,25 @@ SMAPTime(contains(SMAPTime, "N/A")==1)="NaT" ;  % needed as the first element of
 SMAPnonan=find(SMAPSoilMoisture ~= -9999 & isnan(SMAPSoilMoisture)==0 & datetime(SMAPTime) > min(datetime(HydroTime))- ThresholdTimeDelay/24 ...
     & datetime(SMAPTime) < max(datetime(HydroTime))+ ThresholdTimeDelay/24) ;
 
+if RefSatellite=="SMAP" &  SMAPQC=="Recommended" % This sis for SMAP data
+goodRecommended=find(bitget(SMAPretrieval_qual_flag, 1)==0) ;
+SMAPnonan = intersect(SMAPnonan,goodRecommended) ; 
+elseif RefSatellite=="SMAP" &  SMAPQC=="Successfull" % This is for SMAP data
+goodSuccessfull=find(bitget(SMAPretrieval_qual_flag, 3)==0) ;
+SMAPnonan = intersect(SMAPnonan,goodSuccessfull) ; 
+elseif RefSatellite=="SMOS" & SMAPQC=="NonNominal"  % This sis for SMOS data
+goodRecommended=find(bitget(SMAPretrieval_qual_flag, 1)==0) ;
+SMAPnonan = intersect(SMAPnonan,goodRecommended) ; 
+else
+disp('WARNING: No MW radiometer QC filtering')  
+end
+
 SMAPSoilMoisture=SMAPSoilMoisture(SMAPnonan) ; 
 SMAPTime=SMAPTime(SMAPnonan) ; 
 SMAPLatitude=SMAPLatitude(SMAPnonan) ;
 SMAPLongitude=SMAPLongitude(SMAPnonan) ;
 % clear SMAPnonan HydroSSMQuality Hydrononan DelayPoints SMAPtimeAll arclen pippo
-clear SMAPnonan HydroSSMQuality Hydrononan
+clear SMAPnonan HydroSSMQuality Hydrononan goodRecommended goodSuccessfull
 
 [HydroPoints b]=size(HydroSoilMoisture)  ;
 SMAPSMtoplot(ii,1:HydroPoints)=NaN(1,HydroPoints) ; 
