@@ -276,7 +276,7 @@ disp([char(datetime('now','Format','yyyy-MM-dd HH:mm:ss')) ' INFO: selection of 
         fprintf(logfileID,[char(datetime('now','Format','yyyy-MM-dd HH:mm:ss')) ' INFO: selection of SMAP and HydroGNSS files on day ' char(string(ii)) ' to be colocated terminated. Program continuing']) ; 
         fprintf(logfileID,'\n') ; 
 %         waitbar(ii/dayOK-0.1,f, 'QC-main progressing ....');
-        waitbar(ii/dayOK-0.1);
+waitbar(ii/dayOK-0.1,f);
 
 
 figure(vvvvv) ; nexttile ; geoscatter(SMAPLatitude, SMAPLongitude, [5] , 100.*SMAPSoilMoisture, 'filled')
@@ -292,7 +292,15 @@ e = referenceEllipsoid('WGS84') ;
 if savespace=='Yes', mfile = matfile([MATfileFolder '\myFile.mat'],'Writable',true); end
 
 if savespace=='Yes'
-myfile.arclen=1000.*Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude'; SMAPLongitude']) ;    
+step=400000
+myfile.arclen=[] ; 
+for isplit=1:step:step*fix(SMAPPoints/step)    
+% myfile.arclen=1000*Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude(isplit:isplit-1+step)'; SMAPLongitude(isplit:isplit-1+step)']) ; 
+myfile.arclen=[myfile.arclen, 1000*Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude(isplit:isplit-1+step)'; SMAPLongitude(isplit:isplit-1+step)']) ] ; 
+end
+myfile.arclen=[myfile.arclen, 1000*Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude(isplit+stel:end)'; SMAPLongitude(isplit+step:end)']) ] ; 
+
+% myfile.arclen=1000.*Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude'; SMAPLongitude']) ;    
 sizearclen=size(myfile.arclen) ; 
 [NearSpacerow, NearSpacecol] = find(myfile.arclen <= ThresholDist) ;
 Idxspace= sub2ind(sizearclen,NearSpacerow,NearSpacecol) ; 
