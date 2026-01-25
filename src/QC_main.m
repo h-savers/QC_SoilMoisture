@@ -143,7 +143,7 @@ end  % % end loop on the days
  SMAP = ReadSMAP(dayOKwithSMAP, SMAPfileOK, SMAPfolderOK, pixelSMAP, lineSMAP);
 
  elseif RefSatellite=="SMAP09"
-
+ ThresholDist=Threshold09Dist ;
  [dayOK, dayOKwithSMAP, SMAPfolderOK, SMAPfileOK] = IdentifySMAPfolder(L2OPdataOK, timeproduct_sixtotOK, DynamicAuxiliarySMAP09RootPath);
 %% read SMAP 9 km data
  SMAP = ReadSMAP(dayOKwithSMAP, SMAPfileOK, SMAPfolderOK, pixelSMAP09, lineSMAP09);
@@ -263,6 +263,7 @@ SMAPSoilMoisture=SMAPSoilMoisture(SMAPnonan) ;
 SMAPTime=SMAPTime(SMAPnonan) ; 
 SMAPLatitude=SMAPLatitude(SMAPnonan) ;
 SMAPLongitude=SMAPLongitude(SMAPnonan) ;
+SMAPretrieval_qual_flag=SMAPretrieval_qual_flag(SMAPnonan) ;
 % clear SMAPnonan HydroSSMQuality Hydrononan DelayPoints SMAPtimeAll arclen pippo
 clear SMAPnonan HydroSSMQuality Hydrononan goodRecommended goodSuccessfull
 
@@ -300,6 +301,7 @@ if numsplits ==0
 else
     myfile.arclen=[] ; 
     for isplit=1:sizesave:sizesave*numsplits    
+%         isplit
 % myfile.arclen=1000*Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude(isplit:isplit-1+step)'; SMAPLongitude(isplit:isplit-1+step)']) ; 
     myfile.arclen=[myfile.arclen, 1000*Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude(isplit:isplit-1+sizesave)'; SMAPLongitude(isplit:isplit-1+sizesave)']) ] ; 
 end
