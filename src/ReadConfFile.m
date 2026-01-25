@@ -1,6 +1,6 @@
 function [RefSatellite, ProductLevel, ProcessingSatellite, savespace, MATfileFolder, DataInputRootPath, DynamicAuxiliarySMOSRootPath,...
           DynamicAuxiliarySMAPRootPath, DynamicAuxiliarySMAP09RootPath, LogsOutputRootPath, ThresholDist, ThresholdTimeDelay, ThrSameDist,...
-          ThrSameTime, Threshold09Dist, Thr09SameDist, ReportFolder,SMAPQC] = ReadConfFile(configurationPath)
+          ThrSameTime, Threshold09Dist, Thr09SameDist, ReportFolder,SMAPQC, sizesave] = ReadConfFile(configurationPath)
 
             lines = string(splitlines(fileread(configurationPath)));
 %             
@@ -26,6 +26,13 @@ function [RefSatellite, ProductLevel, ProcessingSatellite, savespace, MATfileFol
             ConfigRightLine= find(ConfigRightLine==1)  ;   
             startIndex= regexp(lines(ConfigRightLine),'=') ; 
             savespace= extractAfter(lines(ConfigRightLine),startIndex) ;  
+            
+            %%         
+            ConfigRightLine= contains(lines,'sizesave')  ;  
+            ConfigRightLine= find(ConfigRightLine==1)  ;   
+            startIndex= regexp(lines(ConfigRightLine),'=') ; 
+            sizesave= extractAfter(lines(ConfigRightLine),startIndex) ; % size of the blocks to split the arclen computation 
+            sizesave=double(string(sizesave))  ; % 
 
             %%         
             ConfigRightLine= contains(lines,'SMAPQC')  ;  

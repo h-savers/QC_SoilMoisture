@@ -25,7 +25,7 @@ end
 %
 [RefSatellite, ProductLevel, ProcessingSatellite, savespace, MATfileFolder, DataInputRootPath, DynamicAuxiliarySMOSRootPath,...
     DynamicAuxiliarySMAPRootPath, DynamicAuxiliarySMAP09RootPath, LogsOutputRootPath, ThresholDist, ThresholdTimeDelay,...
-    ThrSameDist, ThrSameTime, Threshold09Dist, Thr09SameDist, ReportFolder, SMAPQC] = ReadConfFile(configurationPath);
+    ThrSameDist, ThrSameTime, Threshold09Dist, Thr09SameDist, ReportFolder, SMAPQC, sizesave] = ReadConfFile(configurationPath);
 
 %%%%%%%  End Read configuration file
 %
@@ -191,7 +191,7 @@ SMAPLongitude=[SMAP(ii,1).longitude_AM(:); SMAP(ii,2).longitude_AM(:); SMAP(ii,3
 SMAPretrieval_qual_flag=[SMAP(ii,1).retrieval_qual_flag_AM_REF(:); SMAP(ii,2).retrieval_qual_flag_AM_REF(:); SMAP(ii,3).retrieval_qual_flag_AM_REF(:) ;...
     SMAP(ii,1).retrieval_qual_flag_PM_REF(:); SMAP(ii,2).retrieval_qual_flag_PM_REF(:); SMAP(ii,3).retrieval_qual_flag_PM_REF(:) ] ;
 
-clear SMAP
+% clear SMAP
 
 HydroSoilMoisture=[L2OPdataOK(ii,1).SoilMoisture(:); L2OPdataOK(ii,2).SoilMoisture(:);L2OPdataOK(ii,3).SoilMoisture(:);L2OPdataOK(ii,4).SoilMoisture(:)] ;
 HydroTime=[L2OPdataOK(ii,1).ObservationUTCMidPointTime(:); L2OPdataOK(ii,2).ObservationUTCMidPointTime(:);L2OPdataOK(ii,3).ObservationUTCMidPointTime(:);L2OPdataOK(ii,4).ObservationUTCMidPointTime(:)] ;
@@ -214,6 +214,7 @@ HydroLon=L2OPdataOK(ii,1).DataLongitude(:);
 HydroSSMQuality=L2OPdataOK(ii,1).SSMQuality(:); 
 
 end
+
 
 HydroLat=single(HydroLat) ; 
 HydroLon=single(HydroLon) ; 
@@ -289,16 +290,21 @@ end
 mindist=[] ;
 mindelay=[] ; 
 e = referenceEllipsoid('WGS84') ;
-if savespace=='Yes', mfile = matfile([MATfileFolder '\myFile.mat'],'Writable',true); end
+% if savespace=='Yes', mfile = matfile([MATfileFolder '\myFile.mat'],'Writable',true); end
 
 if savespace=='Yes'
-step=400000
-myfile.arclen=[] ; 
-for isplit=1:step:step*fix(SMAPPoints/step)    
+mfile = matfile([MATfileFolder '\myFile.mat'],'Writable',true); 
+numsplits=fix(SMAPPoints/sizesave) ; 
+if numsplits ==0
+    myfile.arclen=1000.*Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude'; SMAPLongitude']) ;  
+else
+    myfile.arclen=[] ; 
+    for isplit=1:sizesave:sizesave*numsplits    
 % myfile.arclen=1000*Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude(isplit:isplit-1+step)'; SMAPLongitude(isplit:isplit-1+step)']) ; 
-myfile.arclen=[myfile.arclen, 1000*Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude(isplit:isplit-1+step)'; SMAPLongitude(isplit:isplit-1+step)']) ] ; 
+    myfile.arclen=[myfile.arclen, 1000*Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude(isplit:isplit-1+sizesave)'; SMAPLongitude(isplit:isplit-1+sizesave)']) ] ; 
 end
-myfile.arclen=[myfile.arclen, 1000*Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude(isplit+stel:end)'; SMAPLongitude(isplit+step:end)']) ] ; 
+    myfile.arclen=[myfile.arclen, 1000*Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude(isplit+sizesave:end)'; SMAPLongitude(isplit+sizesave:end)']) ] ; 
+end 
 
 % myfile.arclen=1000.*Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude'; SMAPLongitude']) ;    
 sizearclen=size(myfile.arclen) ; 
@@ -306,7 +312,7 @@ sizearclen=size(myfile.arclen) ;
 Idxspace= sub2ind(sizearclen,NearSpacerow,NearSpacecol) ; 
 arclen=myfile.arclen(Idxspace) ; 
 myfile.DelayPoints=hours(repmat(datetime(HydroTime(NearSpacerow)), 1,length(NearSpacerow))-repmat(datetime(SMAPTime(NearSpacecol))', length(NearSpacerow),1 )) ;
-IdxDelay= sub2ind(size(DelayPoints),[1:1:length(NearSpacerow)]',[1:1:length(NearSpacerow)]') ;
+IdxDelay= sub2ind(size(myfile.DelayPoints),[1:1:length(NearSpacerow)]',[1:1:length(NearSpacerow)]') ;
 DelayPoints=myfile.DelayPoints(IdxDelay) ;
 else
 arclen=1000.*Mylldistkm([HydroLat'; HydroLon'], [SMAPLatitude'; SMAPLongitude']) ;
@@ -414,6 +420,8 @@ corrcoe2(ii)=mean((pippo(noerrornan)-mean(pippo(noerrornan))).*(pluto(noerrornan
 geoscatter(HydroSMtoplotLat(ii,noerrornan),HydroSMtoplotLon(ii,noerrornan), 50, error, 'filled')
 ax2=gca ; 
 end
+clear SMAP
+
 colorbar('southoutside')
 title('Map of SSM errors (Reference minus HydroGNSS) [%]')
 %%% end of computation and plot of figure with map of errors
